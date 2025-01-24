@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Câmera -->
+  <rect x="50" y="70" width="200" height="150" rx="10" fill="#e0e0e0"/>
+  <rect x="60" y="80" width="180" height="130" rx="5" fill="#ffffff"/>
+  
+  <!-- Rosto esquemático -->
+  <circle cx="150" cy="145" r="30" fill="#90caf9"/>
+  <circle cx="140" cy="135" r="5" fill="#1565c0"/>
+  <circle cx="160" cy="135" r="5" fill="#1565c0"/>
+  <path d="M140,155 Q150,165 160,155" fill="none" stroke="#1565c0" stroke-width="2"/>
+  
+  <!-- Raios de luz -->
+  <g opacity="0.7">
+    <!-- Luz principal -->
+    <path d="M150,30 L130,115" stroke="#ffd700" stroke-width="2"/>
+    <path d="M150,30 L150,115" stroke="#ffd700" stroke-width="2"/>
+    <path d="M150,30 L170,115" stroke="#ffd700" stroke-width="2"/>
+    
+    <!-- Luz ambiente -->
+    <path d="M50,30 L130,145" stroke="#ffd700" stroke-width="1" stroke-dasharray="4,4"/>
+    <path d="M250,30 L170,145" stroke="#ffd700" stroke-width="1" stroke-dasharray="4,4"/>
+  </g>
+  
+  <!-- Símbolo de luz -->
+  <circle cx="150" cy="30" r="15" fill="#ffd700"/>
+  <g stroke="#ffd700" stroke-width="2">
+    <line x1="150" y1="5" x2="150" y2="15"/>
+    <line x1="175" y1="30" x2="185" y2="30"/>
+    <line x1="115" y1="30" x2="125" y2="30"/>
+    <line x1="167" y1="13" x2="174" y2="6"/>
+    <line x1="133" y1="13" x2="126" y2="6"/>
+    <line x1="167" y1="47" x2="174" y2="54"/>
+    <line x1="133" y1="47" x2="126" y2="54"/>
+  </g>
+  
+  <!-- Texto explicativo -->
+  <text x="150" y="190" text-anchor="middle" font-family="Arial" font-size="12" fill="#000000">
+    Ambiente bem iluminado
+  </text>
+</svg> 
