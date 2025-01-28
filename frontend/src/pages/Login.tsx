@@ -8,16 +8,18 @@ import {
   Heading,
   Text,
   Center,
-  useToast
+  useToast,
+  Select
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { mockLogin } from '../mocks/api'
 import { useNavigate } from 'react-router-dom'
+import { MOCK_DATA } from '../mocks/data'
 
 export function Login() {
   const [cpf, setCpf] = useState('')
   const [obra, setObra] = useState('')
+  const [perfil, setPerfil] = useState('FUNCIONARIO')
   const [loading, setLoading] = useState(false)
   
   const { login } = useAuth()
@@ -25,7 +27,7 @@ export function Login() {
   const navigate = useNavigate()
 
   const handleSubmit = async () => {
-    if (!cpf || !obra) {
+    if (!cpf || (perfil === 'FUNCIONARIO' && !obra)) {
       toast({
         title: 'Erro',
         description: 'Preencha todos os campos',
@@ -37,16 +39,22 @@ export function Login() {
 
     try {
       setLoading(true)
-      const response = await mockLogin(cpf, obra)
       
-      login(response.usuario, response.token)
-      toast({
-        title: 'Sucesso',
-        description: 'Login realizado com sucesso',
-        status: 'success',
-        duration: 3000
-      })
-      navigate('/registro')
+      const usuario = MOCK_DATA.usuarios.find(u => 
+        u.cpf === cpf && u.perfil === perfil
+      )
+
+      if (!usuario) {
+        throw new Error('Usuário não encontrado')
+      }
+
+      if (perfil === 'FUNCIONARIO' && usuario.obra !== obra) {
+        throw new Error('Obra não corresponde')
+      }
+
+      login(usuario, 'mock-token')
+      navigate(perfil === 'ADMIN' ? '/admin' : '/registro')
+      
     } catch (error) {
       toast({
         title: 'Erro',
@@ -74,6 +82,17 @@ export function Login() {
           <Heading size="lg">Login</Heading>
           <Text color="gray.600">Sistema de Controle de Horas Extras</Text>
           
+          <FormControl>
+            <FormLabel>Tipo de Acesso</FormLabel>
+            <Select 
+              value={perfil} 
+              onChange={(e) => setPerfil(e.target.value)}
+            >
+              <option value="FUNCIONARIO">Funcionário</option>
+              <option value="ADMIN">Administrador</option>
+            </Select>
+          </FormControl>
+
           <FormControl isRequired>
             <FormLabel>CPF</FormLabel>
             <Input 
@@ -85,16 +104,18 @@ export function Login() {
             />
           </FormControl>
 
-          <FormControl isRequired>
-            <FormLabel>Obra</FormLabel>
-            <Input 
-              value={obra}
-              onChange={(e) => setObra(e.target.value)}
-              placeholder="Digite o código da obra"
-              bg="white"
-              disabled={loading}
-            />
-          </FormControl>
+          {perfil === 'FUNCIONARIO' && (
+            <FormControl isRequired>
+              <FormLabel>Obra</FormLabel>
+              <Input 
+                value={obra}
+                onChange={(e) => setObra(e.target.value)}
+                placeholder="Digite o código da obra"
+                bg="white"
+                disabled={loading}
+              />
+            </FormControl>
+          )}
 
           <Button 
             colorScheme="blue" 

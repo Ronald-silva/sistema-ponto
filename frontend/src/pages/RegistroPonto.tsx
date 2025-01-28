@@ -117,19 +117,11 @@ export function RegistroPonto() {
       <VStack spacing={6}>
         <Card w="100%">
           <CardHeader>
-            <HStack justify="space-between" w="100%">
-              <Box>
-                <Heading size="lg">Registro de Ponto</Heading>
-                <Text>{usuario?.nome}</Text>
-                <Text>Obra: {usuario?.obra_atual}</Text>
-              </Box>
-              <Button 
-                colorScheme="blue" 
-                onClick={() => navigate('/admin')}
-              >
-                Painel Admin
-              </Button>
-            </HStack>
+            <Box>
+              <Heading size="lg">Registro de Ponto</Heading>
+              <Text>{usuario?.nome}</Text>
+              <Text>Obra: {usuario?.obra_atual}</Text>
+            </Box>
           </CardHeader>
           <CardBody>
             <HStack spacing={4} justify="center">
