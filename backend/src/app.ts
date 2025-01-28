@@ -1,17 +1,20 @@
-import express from 'express';
-import cors from 'cors';
-import { router } from './routes';
+import express from 'express'
+import cors from 'cors'
+import { routes } from './routes'
+import { LimpezaService } from './services/LimpezaService'
+import { verificarLimpezaMiddleware } from './middlewares/registroMiddleware'
 
-const app = express();
+const app = express()
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors())
+app.use(express.json({ limit: '10mb' })) // Aumenta o limite para receber fotos
+app.use('/api', routes)
 
-app.use(express.json());
-app.use(router);
+// Inicia o serviço de limpeza automática
+const limpezaService = new LimpezaService()
+limpezaService.agendarLimpeza()
 
-export { app }; 
+// Usa o middleware nas rotas de registro
+app.use('/api/registros', verificarLimpezaMiddleware)
+
+export { app } 

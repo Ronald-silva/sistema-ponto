@@ -1,35 +1,35 @@
-import { Router, Request, Response, NextFunction, Handler } from 'express';
-import { registroPontoRouter } from './registroPonto.routes';
-import { sessionsRouter } from './sessions.routes';
-import { usuariosRouter } from './usuarios.routes';
-import { metricasRouter } from './metricas.routes';
-import { obrasRouter } from './obras.routes';
-import { registrosRouter } from './registros.routes';
-import { horasExtrasRouter } from './horasExtras.routes';
-import { ensureAuthenticated } from '../middlewares/ensureAuthenticated';
+import { Router } from 'express'
+import { AuthController } from '../controllers/AuthController'
+import { RegistroPontoController } from '../controllers/RegistroPontoController'
+import { authMiddleware } from '../middlewares/auth'
+import { PrismaClient } from '@prisma/client'
+import { DashboardController } from '../controllers/DashboardController'
 
-const router = Router();
-
-const indexHandler: Handler = (_req: Request, res: Response) => {
-  res.json({ message: 'API Controle de Horas Extras' });
-};
+const routes = Router()
+const authController = new AuthController()
+const registroPontoController = new RegistroPontoController()
+const prisma = new PrismaClient()
+const dashboardController = new DashboardController()
 
 // Rotas públicas
-router.get('/', indexHandler);
-router.use('/sessions', sessionsRouter);
-router.use('/obras', obrasRouter);
-
-// Middleware de autenticação para as rotas protegidas
-const protectedRouter = Router();
-protectedRouter.use(ensureAuthenticated);
+routes.post('/auth/login', authController.login)
 
 // Rotas protegidas
-protectedRouter.use('/registros', registroPontoRouter);
-protectedRouter.use('/usuarios', usuariosRouter);
-protectedRouter.use('/metricas', metricasRouter);
-protectedRouter.use('/registros-ponto', registrosRouter);
-protectedRouter.use('/horas-extras', horasExtrasRouter);
+routes.use(authMiddleware)
+routes.post('/registros', registroPontoController.registrar)
+routes.get('/registros', registroPontoController.listarHistorico)
 
-router.use(protectedRouter);
+// Adicione esta rota para testes
+routes.get('/usuarios', async (req, res) => {
+  const usuarios = await prisma.usuario.findMany({
+    include: {
+      registros: true
+    }
+  })
+  return res.json(usuarios)
+})
 
-export { router }; 
+// Rotas do dashboard (protegidas)
+routes.get('/dashboard/stats', dashboardController.getStats)
+
+export { routes } 

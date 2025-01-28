@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,94 +8,37 @@ datasource db {
 }
 
 model Usuario {
-  id            Int            @id @default(autoincrement())
-  nome          String
-  email         String         @unique
-  cpf           String         @unique
-  senha         String
-  cargo         String         // ADMIN ou FUNCIONARIO
-  valor_hora    Float
-  ativo         Boolean        @default(true)
-  descritor_facial String?     // Vetor de características faciais
-  obra_atual_id Int?
-  obra_atual    Obra?         @relation("UsuarioObraAtual", fields: [obra_atual_id], references: [id])
-  obras_usuario ObrasUsuario[]
-  registros     RegistroPonto[]
-  horas_extras  HoraExtra[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@map("usuarios")
+  id          String   @id @default(uuid())
+  nome        String
+  cpf         String   @unique
+  cargo       String?
+  status      String   @default("ATIVO") // ATIVO ou INATIVO
+  perfil      String   @default("FUNCIONARIO") // ADMIN ou FUNCIONARIO
+  obraAtual   String   // Mantemos como string por enquanto
+  registros   RegistroPonto[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Obra {
-  id            Int            @id @default(autoincrement())
-  nome          String
-  endereco      String
-  ativa         Boolean        @default(true)
-  usuarios      ObrasUsuario[]
-  usuarios_atuais Usuario[]    @relation("UsuarioObraAtual")
-  registros     RegistroPonto[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@map("obras")
-}
-
-model ObrasUsuario {
-  id         Int      @id @default(autoincrement())
-  usuario_id Int
-  obra_id    Int
-  usuario    Usuario  @relation(fields: [usuario_id], references: [id])
-  obra       Obra     @relation(fields: [obra_id], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@map("obras_usuarios")
+  id              String    @id @default(uuid())
+  nome            String
+  status          String    @default("ATIVA") // ATIVA ou INATIVA
+  dataInicio      DateTime  @default(now())
+  dataPrevisao    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model RegistroPonto {
-  id            Int      @id @default(autoincrement())
-  usuario_id    Int
-  obra_id       Int
-  tipo          String   // ENTRADA ou SAIDA
-  tipo_dia      String   // NORMAL, DOMINGO, FERIADO
-  valor_hora    Float
-  percentual    Float    // 50 para dias úteis, 100 para domingos e feriados
-  valor_total   Float
-  foto_url      String?  // URL da foto do registro
-  data_hora     DateTime @default(now())
-  usuario       Usuario  @relation(fields: [usuario_id], references: [id])
-  obra          Obra     @relation(fields: [obra_id], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@map("registros_ponto")
-}
-
-model HoraExtra {
-  id          Int      @id @default(autoincrement())
-  usuario_id  Int
-  data        DateTime
-  quantidade  Float
-  valor_hora  Float
-  percentual  Float    // 50 para dias úteis, 100 para domingos e feriados
-  valor_total Float
-  status      String   @default("PENDENTE") // PENDENTE, APROVADA, REJEITADA
-  motivo_rejeicao String?
-  usuario     Usuario  @relation(fields: [usuario_id], references: [id])
+  id          String   @id @default(uuid())
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   String
+  tipo        String   // 'ENTRADA' ou 'SAIDA'
+  dataHora    DateTime @default(now())
+  foto        String?  
+  processado  Boolean  @default(false)
+  horasExtras Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@map("horas_extras")
-}
-
-model Feriado {
-  id          Int      @id @default(autoincrement())
-  data        DateTime
-  descricao   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("feriados")
-}
+} 
