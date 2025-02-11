@@ -1,35 +1,25 @@
-import { Router } from 'express'
-import { AuthController } from '../controllers/AuthController'
-import { RegistroPontoController } from '../controllers/RegistroPontoController'
-import { authMiddleware } from '../middlewares/auth'
-import { PrismaClient } from '@prisma/client'
-import { DashboardController } from '../controllers/DashboardController'
+import { Router } from 'express';
+import { authRoutes } from './auth.routes';
+import { userRoutes } from './user.routes';
+import { projectRoutes } from './project.routes';
+import { timeRecordRoutes } from './timeRecord.routes';
+import { holidayRoutes } from './holiday.routes';
+import { faceRecognitionRoutes } from './faceRecognition.routes';
+import { dashboardRoutes } from './dashboard.routes';
+import { authMiddleware } from '../middlewares/auth';
 
-const routes = Router()
-const authController = new AuthController()
-const registroPontoController = new RegistroPontoController()
-const prisma = new PrismaClient()
-const dashboardController = new DashboardController()
+const router = Router();
 
 // Rotas públicas
-routes.post('/auth/login', authController.login)
+router.use('/auth', authRoutes);
 
 // Rotas protegidas
-routes.use(authMiddleware)
-routes.post('/registros', registroPontoController.registrar)
-routes.get('/registros', registroPontoController.listarHistorico)
+router.use(authMiddleware);
+router.use('/users', userRoutes);
+router.use('/projects', projectRoutes);
+router.use('/time-records', timeRecordRoutes);
+router.use('/holidays', holidayRoutes);
+router.use('/face-recognition', faceRecognitionRoutes);
+router.use('/dashboard', dashboardRoutes);
 
-// Adicione esta rota para testes
-routes.get('/usuarios', async (req, res) => {
-  const usuarios = await prisma.usuario.findMany({
-    include: {
-      registros: true
-    }
-  })
-  return res.json(usuarios)
-})
-
-// Rotas do dashboard (protegidas)
-routes.get('/dashboard/stats', dashboardController.getStats)
-
-export { routes } 
+export { router };

@@ -1,20 +1,36 @@
 import express from 'express'
 import cors from 'cors'
-import { routes } from './routes'
-import { LimpezaService } from './services/LimpezaService'
-import { verificarLimpezaMiddleware } from './middlewares/registroMiddleware'
+import { authRoutes } from './routes/auth.routes'
+import { projectsRoutes } from './routes/projects.routes'
 
 const app = express()
 
-app.use(cors())
-app.use(express.json({ limit: '10mb' })) // Aumenta o limite para receber fotos
-app.use('/api', routes)
+// Configuração do CORS
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 
-// Inicia o serviço de limpeza automática
-const limpezaService = new LimpezaService()
-limpezaService.agendarLimpeza()
+app.use(express.json())
 
-// Usa o middleware nas rotas de registro
-app.use('/api/registros', verificarLimpezaMiddleware)
+// Middleware para log de requisições
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.log(`${req.method} ${req.url}`)
+  console.log('Body:', req.body)
+  next()
+})
 
-export { app } 
+// Rotas
+app.use('/auth', authRoutes)
+app.use('/projects', projectsRoutes)
+
+// Middleware de erro
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Erro:', err)
+  console.error('Stack:', err.stack)
+  res.status(500).json({ error: 'Erro interno do servidor' })
+})
+
+export { app }

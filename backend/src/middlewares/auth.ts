@@ -1,33 +1,41 @@
 import { Request, Response, NextFunction } from 'express'
-import { verify } from 'jsonwebtoken'
 
-interface TokenPayload {
-  id: string;
-  iat: number;
-  exp: number;
-}
-
-export function authMiddleware(
-  req: Request,
-  res: Response,
+export async function authMiddleware(
+  request: Request,
+  response: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers.authorization
+  const { authorization } = request.headers
 
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Token não fornecido' })
+  if (!authorization) {
+    return response.status(401).json({ error: 'Token não fornecido' })
   }
 
-  const [, token] = authHeader.split(' ')
+  const [, token] = authorization.split(' ')
+
+  // ID fixo do admin que definimos no frontend
+  const adminId = 'd504a949-b481-40be-a675-1528388986aa2'
 
   try {
-    const decoded = verify(token, process.env.JWT_SECRET || 'default')
-    const { id } = decoded as TokenPayload
+    if (token === adminId) {
+      request.user = {
+        id: adminId,
+        role: 'ADMIN'
+      }
+      return next()
+    }
 
-    req.usuario = { id }
+    // TODO: Implementar verificação de funcionário
+    if (token === 'temp-employee-id') {
+      request.user = {
+        id: token,
+        role: 'EMPLOYEE'
+      }
+      return next()
+    }
 
-    return next()
-  } catch {
-    return res.status(401).json({ error: 'Token inválido' })
+    return response.status(401).json({ error: 'Token inválido' })
+  } catch (err) {
+    return response.status(401).json({ error: 'Token inválido' })
   }
-} 
+}
