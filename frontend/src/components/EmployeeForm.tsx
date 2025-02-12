@@ -12,20 +12,33 @@ const employeeFormSchema = z.object({
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
   role: z.enum([
     '',
-    'PEDREIRO',
-    'SERVENTE',
+    'ENGENHEIRO_CIVIL',
+    'ESTAGIARIO',
+    'ESTAGIARIO_DE_ENDOMARKETING',
+    'ESTAGIARIO_DE_PROCESSOS',
+    'GERENTE_DE_OBRAS',
+    'JOVEM_APRENDIZ',
+    'LIDER_DE_EQUIPE',
     'MESTRE_DE_OBRAS',
-    'CARPINTEIRO',
-    'ARMADOR',
-    'ELETRICISTA',
-    'ENCANADOR',
-    'PINTOR',
-    'AZULEJISTA',
-    'ENGENHEIRO',
-    'ARQUITETO',
-    'ALMOXARIFE',
-    'ADMINISTRATIVO',
-    'ADMIN'
+    'MOTORISTA',
+    'MOTORISTA_I',
+    'MOTORISTA_OPERACIONAL_DE_GUINCHO',
+    'OPERADOR_DE_MAQUINA_DE_TERRAPLANAGEM',
+    'PEDREIRO',
+    'RECEPCIONISTA',
+    'SERVENTE',
+    'SERVICOS_GERAIS_I',
+    'SERVICOS_GERAIS_II',
+    'SUPERVISOR_ADM_II',
+    'SUPERVISOR_DE_COMPRAS',
+    'SUPERVISOR_DE_DEPARTAMENTO_PESSOAL_A',
+    'SUPERVISOR_DE_DESENVOLVIMENTO_HUMANO',
+    'SUPERVISOR_DE_OBRA',
+    'SUPERVISOR_DE_SEGURANCA_DO_TRABALHO',
+    'SUPERVISOR_FINANCEIRO',
+    'TECNICO_EM_SEGURANCA_DO_TRABALHO_II',
+    'TOPOGRAFO',
+    'VIGIA'
   ]),
   salary: z.string(),
   birth_date: z.string().min(1, 'A data de nascimento é obrigatória'),
@@ -102,13 +115,39 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
 
       onClose()
     } catch (error) {
-      console.error('Erro ao salvar funcionário:', error)
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error('Erro ao salvar funcionário')
-      }
+      console.error(error)
+      toast.error('Erro ao cadastrar funcionário')
     }
+  }
+
+  const roleOptions = {
+    'ENGENHEIRO_CIVIL': 'Engenheiro Civil',
+    'ESTAGIARIO': 'Estagiário',
+    'ESTAGIARIO_DE_ENDOMARKETING': 'Estagiário de Endomarketing',
+    'ESTAGIARIO_DE_PROCESSOS': 'Estagiário de Processos',
+    'GERENTE_DE_OBRAS': 'Gerente de Obras',
+    'JOVEM_APRENDIZ': 'Jovem Aprendiz',
+    'LIDER_DE_EQUIPE': 'Líder de Equipe',
+    'MESTRE_DE_OBRAS': 'Mestre de Obras',
+    'MOTORISTA': 'Motorista',
+    'MOTORISTA_I': 'Motorista I',
+    'MOTORISTA_OPERACIONAL_DE_GUINCHO': 'Motorista Operacional de Guincho',
+    'OPERADOR_DE_MAQUINA_DE_TERRAPLANAGEM': 'Operador de Máquina de Terraplenagem',
+    'PEDREIRO': 'Pedreiro',
+    'RECEPCIONISTA': 'Recepcionista',
+    'SERVENTE': 'Servente',
+    'SERVICOS_GERAIS_I': 'Serviços Gerais I',
+    'SERVICOS_GERAIS_II': 'Serviços Gerais II',
+    'SUPERVISOR_ADM_II': 'Supervisor ADM II',
+    'SUPERVISOR_DE_COMPRAS': 'Supervisor de Compras',
+    'SUPERVISOR_DE_DEPARTAMENTO_PESSOAL_A': 'Supervisor de Departamento Pessoal A',
+    'SUPERVISOR_DE_DESENVOLVIMENTO_HUMANO': 'Supervisor de Desenvolvimento Humano',
+    'SUPERVISOR_DE_OBRA': 'Supervisor de Obra',
+    'SUPERVISOR_DE_SEGURANCA_DO_TRABALHO': 'Supervisor de Segurança do Trabalho',
+    'SUPERVISOR_FINANCEIRO': 'Supervisor Financeiro',
+    'TECNICO_EM_SEGURANCA_DO_TRABALHO_II': 'Técnico em Segurança do Trabalho II',
+    'TOPOGRAFO': 'Topógrafo',
+    'VIGIA': 'Vigia'
   }
 
   return (
@@ -119,141 +158,130 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     >
       <form onSubmit={handleSubmit(handleCreateEmployee)} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
             Nome
           </label>
           <input
             type="text"
             id="name"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
             {...register('name')}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            <span className="text-sm text-red-500">{errors.name.message}</span>
           )}
         </div>
 
         <div>
-          <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="cpf" className="block text-sm font-medium text-zinc-700">
             CPF
           </label>
           <input
             type="text"
             id="cpf"
             maxLength={14}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
             {...register('cpf')}
             onChange={handleCPFChange}
           />
           {errors.cpf && (
-            <p className="mt-1 text-sm text-red-600">{errors.cpf.message}</p>
+            <span className="text-sm text-red-500">{errors.cpf.message}</span>
           )}
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="role" className="block text-sm font-medium text-zinc-700">
             Cargo
           </label>
           <select
             id="role"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
             {...register('role')}
           >
             <option value="">Selecione um cargo</option>
-            <option value="PEDREIRO">Pedreiro</option>
-            <option value="SERVENTE">Servente</option>
-            <option value="MESTRE_DE_OBRAS">Mestre de Obras</option>
-            <option value="CARPINTEIRO">Carpinteiro</option>
-            <option value="ARMADOR">Armador</option>
-            <option value="ELETRICISTA">Eletricista</option>
-            <option value="ENCANADOR">Encanador</option>
-            <option value="PINTOR">Pintor</option>
-            <option value="AZULEJISTA">Azulejista</option>
-            <option value="ENGENHEIRO">Engenheiro</option>
-            <option value="ARQUITETO">Arquiteto</option>
-            <option value="ALMOXARIFE">Almoxarife</option>
-            <option value="ADMINISTRATIVO">Administrativo</option>
-            <option value="ADMIN">Administrador</option>
+            {Object.entries(roleOptions).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
           {errors.role && (
-            <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+            <span className="text-sm text-red-500">{errors.role.message}</span>
           )}
         </div>
 
         <div>
-          <label htmlFor="salary" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="salary" className="block text-sm font-medium text-zinc-700">
             Salário
           </label>
           <input
             type="text"
             id="salary"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
             value={watchSalary}
             onChange={handleSalaryChange}
           />
           {errors.salary && (
-            <p className="mt-1 text-sm text-red-600">{errors.salary.message}</p>
+            <span className="text-sm text-red-500">{errors.salary.message}</span>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700">
-              Data de Nascimento
-            </label>
-            <input
-              type="date"
-              id="birth_date"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              {...register('birth_date')}
-            />
-            {errors.birth_date && (
-              <p className="mt-1 text-sm text-red-600">{errors.birth_date.message}</p>
-            )}
-          </div>
+        <div>
+          <label htmlFor="birth_date" className="block text-sm font-medium text-zinc-700">
+            Data de Nascimento
+          </label>
+          <input
+            type="date"
+            id="birth_date"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
+            {...register('birth_date')}
+          />
+          {errors.birth_date && (
+            <span className="text-sm text-red-500">{errors.birth_date.message}</span>
+          )}
+        </div>
 
-          <div>
-            <label htmlFor="admission_date" className="block text-sm font-medium text-gray-700">
-              Data de Admissão
-            </label>
-            <input
-              type="date"
-              id="admission_date"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              {...register('admission_date')}
-            />
-            {errors.admission_date && (
-              <p className="mt-1 text-sm text-red-600">{errors.admission_date.message}</p>
-            )}
-          </div>
+        <div>
+          <label htmlFor="admission_date" className="block text-sm font-medium text-zinc-700">
+            Data de Admissão
+          </label>
+          <input
+            type="date"
+            id="admission_date"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-violet-500 sm:text-sm"
+            {...register('admission_date')}
+          />
+          {errors.admission_date && (
+            <span className="text-sm text-red-500">{errors.admission_date.message}</span>
+          )}
         </div>
 
         <div className="flex items-center">
           <input
             type="checkbox"
             id="active"
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
             {...register('active')}
           />
-          <label htmlFor="active" className="ml-2 block text-sm text-gray-700">
-            Funcionário ativo
+          <label htmlFor="active" className="ml-2 block text-sm text-zinc-900">
+            Ativo
           </label>
         </div>
 
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-4">
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-zinc-300 px-4 font-medium text-zinc-700 hover:bg-zinc-50"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="h-9 rounded-lg bg-primary px-4 font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar'}
+            {isSubmitting ? 'Salvando...' : defaultValues ? 'Salvar' : 'Cadastrar'}
           </button>
         </div>
       </form>
