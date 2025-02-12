@@ -6,6 +6,7 @@ import { Logo } from '../components/Logo'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@supabase/supabase-js'
+import constructionTools from '/construction-tools.jpg'
 
 const supabase = createClient(
   'https://eyevyovjlxycqixkvxoz.supabase.co',
@@ -120,13 +121,13 @@ export function SignIn() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[--background] p-4 md:p-0">
+    <div className="fixed inset-0 flex items-center justify-center bg-[--background] p-4 md:p-0">
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.1)] md:w-[400px]">
           {/* Header */}
           <div className="border-b border-[--border] bg-white p-6">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-[--primary] p-2.5 text-white">
+              <div className="rounded-xl bg-white/20 p-2.5 text-white backdrop-blur-sm">
                 <Logo className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
@@ -143,13 +144,13 @@ export function SignIn() {
           {/* Content */}
           <div className="space-y-6 p-6">
             {/* User Type Selector */}
-            <div className="flex gap-2 rounded-lg border border-[--border] p-1.5">
+            <div className="flex gap-2 rounded-lg border border-[--border] bg-white p-1.5">
               <button
                 onClick={() => setUserType('ADMIN')}
                 className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-base transition-all ${
                   userType === 'ADMIN'
-                    ? 'bg-[--primary] text-white shadow-sm'
-                    : 'text-[--text-secondary] hover:bg-[--background]'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-[--text-secondary] hover:bg-blue-50'
                 }`}
               >
                 <svg
@@ -172,8 +173,8 @@ export function SignIn() {
                 onClick={() => setUserType('EMPLOYEE')}
                 className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-base transition-all ${
                   userType === 'EMPLOYEE'
-                    ? 'bg-[--primary] text-white shadow-sm'
-                    : 'text-[--text-secondary] hover:bg-[--background]'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-[--text-secondary] hover:bg-blue-50'
                 }`}
               >
                 <svg
@@ -206,7 +207,7 @@ export function SignIn() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     disabled={isLoading}
-                    className="h-11"
+                    className="h-11 bg-white"
                   />
                 </div>
               ) : (
@@ -222,7 +223,7 @@ export function SignIn() {
                       disabled={isLoading}
                       maxLength={11}
                       placeholder="Digite seu CPF"
-                      className="h-11"
+                      className="h-11 bg-white"
                     />
                   </div>
 
@@ -234,7 +235,7 @@ export function SignIn() {
                       value={companyId}
                       onChange={e => setCompanyId(e.target.value)}
                       disabled={isLoading}
-                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Selecione uma empresa</option>
                       {companiesList.map(company => (
@@ -253,7 +254,7 @@ export function SignIn() {
                       value={projectId}
                       onChange={e => setProjectId(e.target.value)}
                       disabled={isLoading || isLoadingProjects}
-                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Selecione uma obra</option>
                       {projects.map(project => (
@@ -275,7 +276,7 @@ export function SignIn() {
 
               <Button
                 type="submit"
-                className="h-11 w-full text-base"
+                className="h-11 w-full bg-blue-500 text-base hover:bg-blue-600 focus:ring-blue-500"
                 disabled={isLoading}
               >
                 {isLoading ? 'Carregando...' : 'Entrar no Sistema'}
