@@ -12,7 +12,12 @@ interface PrivateRouteProps {
 }
 
 function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+
+  // Aguardar a verificação da autenticação
+  if (loading) {
+    return null // ou um componente de loading
+  }
 
   if (!user) {
     return <Navigate to="/sign-in" />
@@ -29,23 +34,31 @@ function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
 }
 
 export function Router() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+
+  // Aguardar a verificação da autenticação
+  if (loading) {
+    return null // ou um componente de loading
+  }
 
   return (
     <Routes>
-      <Route path="/sign-in" element={<SignIn />} />
+      <Route 
+        path="/sign-in" 
+        element={
+          user ? (
+            <Navigate to={user.role === 'ADMIN' ? '/dashboard' : '/time-record'} />
+          ) : (
+            <SignIn />
+          )
+        } 
+      />
 
       <Route
         path="/"
         element={
           user ? (
-            <PrivateRoute>
-              {user.role === 'ADMIN' ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Navigate to="/time-record" />
-              )}
-            </PrivateRoute>
+            <Navigate to={user.role === 'ADMIN' ? '/dashboard' : '/time-record'} />
           ) : (
             <Navigate to="/sign-in" />
           )

@@ -7,39 +7,69 @@ import { toast } from 'sonner'
 import { formatCPF } from '../utils/formatCPF'
 import { formatCurrency } from '../utils/formatCurrency'
 
+const roleOptions = {
+  'ALMOXARIFE A': 'Almoxarife A',
+  'ANALISTA ADMINISTRATIVO II': 'Analista Administrativo II',
+  'Analista Ambiental Junior': 'Analista Ambiental Junior',
+  'Analista de Compras Junior A': 'Analista de Compras Junior A',
+  'Analista de Controladoria Junior A': 'Analista de Controladoria Junior A',
+  'Analista de Orçamento Junior A': 'Analista de Orçamento Junior A',
+  'Analista de Planejamento Junior A': 'Analista de Planejamento Junior A',
+  'ASSISTENTE ADM V': 'Assistente Adm V',
+  'Assistente de Compras': 'Assistente de Compras',
+  'Assistente de Controladoria C': 'Assistente de Controladoria C',
+  'Assistente de Departamento Pessoal C': 'Assistente de Departamento Pessoal C',
+  'Assistente de Obra A': 'Assistente de Obra A',
+  'Assistente de TI A': 'Assistente de TI A',
+  'Assistente Financeiro': 'Assistente Financeiro',
+  'ASSISTENTE TECNICO III': 'Assistente Técnico III',
+  'AUX ADMINISTRATIVO I': 'Aux Administrativo I',
+  'AUX DE BOMBEIRO HIDRAULICO': 'Aux de Bombeiro Hidráulico',
+  'Auxiliar Administrativo B': 'Auxiliar Administrativo B',
+  'Auxiliar de Almoxarifado': 'Auxiliar de Almoxarifado',
+  'AUXILIAR DE BOMBEIRO': 'Auxiliar de Bombeiro',
+  'AUXILIAR DE MUNK': 'Auxiliar de Munk',
+  'Auxiliar de Obra A': 'Auxiliar de Obra A',
+  'BOMBEIRO HIDRAULICO': 'Bombeiro Hidráulico',
+  'Coordenador Administrativo-Financeiro': 'Coordenador Administrativo-Financeiro',
+  'ENCARREGADO DE OBRAS': 'Encarregado de Obras',
+  'ENCARREGADO DE OBRAS I': 'Encarregado de Obras I',
+  'ENGENHEIRO CIVIL': 'Engenheiro Civil',
+  'ESTAGIARIO': 'Estagiário',
+  'ESTAGIARIO DE ENDOMARKETING': 'Estagiário de Endomarketing',
+  'ESTAGIARIO DE PROCESSOS': 'Estagiário de Processos',
+  'GERENTE DE OBRAS': 'Gerente de Obras',
+  'JOVEM APRENDIZ': 'Jovem Aprendiz',
+  'LIDER DE EQUIPE': 'Líder de Equipe',
+  'MESTRE DE OBRAS': 'Mestre de Obras',
+  'MOTORISTA': 'Motorista',
+  'MOTORISTA I': 'Motorista I',
+  'MOTORISTA OPERACIONAL DE GUINCHO': 'Motorista Operacional de Guincho',
+  'Operador de Máquina de Terraplanagem': 'Operador de Máquina de Terraplanagem',
+  'PEDREIRO': 'Pedreiro',
+  'RECEPCIONISTA': 'Recepcionista',
+  'SERVENTE': 'Servente',
+  'SERVICOS GERAIS I': 'Serviços Gerais I',
+  'SERVICOS GERAIS II': 'Serviços Gerais II',
+  'SUPERVISOR ADM II': 'Supervisor Adm II',
+  'Supervisor de Compras': 'Supervisor de Compras',
+  'Supervisor de Departamento Pessoal A': 'Supervisor de Departamento Pessoal A',
+  'Supervisor de Desenvolvimento Humano': 'Supervisor de Desenvolvimento Humano',
+  'Supervisor de Obra': 'Supervisor de Obra',
+  'SUPERVISOR DE SEGURANCA DO TRABALHO': 'Supervisor de Segurança do Trabalho',
+  'Supervisor Financeiro': 'Supervisor Financeiro',
+  'TECNICO DE SEGURANCA DO TRABALHO II': 'Técnico de Segurança do Trabalho II',
+  'TOPOGRAFO': 'Topógrafo',
+  'VIGIA': 'Vigia'
+}
+
 const employeeFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
-  role: z.enum([
-    '',
-    'ENGENHEIRO_CIVIL',
-    'ESTAGIARIO',
-    'ESTAGIARIO_DE_ENDOMARKETING',
-    'ESTAGIARIO_DE_PROCESSOS',
-    'GERENTE_DE_OBRAS',
-    'JOVEM_APRENDIZ',
-    'LIDER_DE_EQUIPE',
-    'MESTRE_DE_OBRAS',
-    'MOTORISTA',
-    'MOTORISTA_I',
-    'MOTORISTA_OPERACIONAL_DE_GUINCHO',
-    'OPERADOR_DE_MAQUINA_DE_TERRAPLANAGEM',
-    'PEDREIRO',
-    'RECEPCIONISTA',
-    'SERVENTE',
-    'SERVICOS_GERAIS_I',
-    'SERVICOS_GERAIS_II',
-    'SUPERVISOR_ADM_II',
-    'SUPERVISOR_DE_COMPRAS',
-    'SUPERVISOR_DE_DEPARTAMENTO_PESSOAL_A',
-    'SUPERVISOR_DE_DESENVOLVIMENTO_HUMANO',
-    'SUPERVISOR_DE_OBRA',
-    'SUPERVISOR_DE_SEGURANCA_DO_TRABALHO',
-    'SUPERVISOR_FINANCEIRO',
-    'TECNICO_EM_SEGURANCA_DO_TRABALHO_II',
-    'TOPOGRAFO',
-    'VIGIA'
-  ]),
+  role: z.string().min(1, 'O cargo é obrigatório').refine(
+    (value) => Object.keys(roleOptions).includes(value),
+    'Cargo inválido'
+  ),
   salary: z.string(),
   birth_date: z.string().min(1, 'A data de nascimento é obrigatória'),
   admission_date: z.string().min(1, 'A data de admissão é obrigatória'),
@@ -118,36 +148,6 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
       console.error(error)
       toast.error('Erro ao cadastrar funcionário')
     }
-  }
-
-  const roleOptions = {
-    'ENGENHEIRO_CIVIL': 'Engenheiro Civil',
-    'ESTAGIARIO': 'Estagiário',
-    'ESTAGIARIO_DE_ENDOMARKETING': 'Estagiário de Endomarketing',
-    'ESTAGIARIO_DE_PROCESSOS': 'Estagiário de Processos',
-    'GERENTE_DE_OBRAS': 'Gerente de Obras',
-    'JOVEM_APRENDIZ': 'Jovem Aprendiz',
-    'LIDER_DE_EQUIPE': 'Líder de Equipe',
-    'MESTRE_DE_OBRAS': 'Mestre de Obras',
-    'MOTORISTA': 'Motorista',
-    'MOTORISTA_I': 'Motorista I',
-    'MOTORISTA_OPERACIONAL_DE_GUINCHO': 'Motorista Operacional de Guincho',
-    'OPERADOR_DE_MAQUINA_DE_TERRAPLANAGEM': 'Operador de Máquina de Terraplenagem',
-    'PEDREIRO': 'Pedreiro',
-    'RECEPCIONISTA': 'Recepcionista',
-    'SERVENTE': 'Servente',
-    'SERVICOS_GERAIS_I': 'Serviços Gerais I',
-    'SERVICOS_GERAIS_II': 'Serviços Gerais II',
-    'SUPERVISOR_ADM_II': 'Supervisor ADM II',
-    'SUPERVISOR_DE_COMPRAS': 'Supervisor de Compras',
-    'SUPERVISOR_DE_DEPARTAMENTO_PESSOAL_A': 'Supervisor de Departamento Pessoal A',
-    'SUPERVISOR_DE_DESENVOLVIMENTO_HUMANO': 'Supervisor de Desenvolvimento Humano',
-    'SUPERVISOR_DE_OBRA': 'Supervisor de Obra',
-    'SUPERVISOR_DE_SEGURANCA_DO_TRABALHO': 'Supervisor de Segurança do Trabalho',
-    'SUPERVISOR_FINANCEIRO': 'Supervisor Financeiro',
-    'TECNICO_EM_SEGURANCA_DO_TRABALHO_II': 'Técnico em Segurança do Trabalho II',
-    'TOPOGRAFO': 'Topógrafo',
-    'VIGIA': 'Vigia'
   }
 
   return (
@@ -268,20 +268,20 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-4">
+        <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+            className="h-9 rounded-lg border border-zinc-300 px-4 font-medium text-zinc-700 hover:bg-zinc-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 rounded-lg bg-primary px-4 font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? 'Salvando...' : defaultValues ? 'Salvar' : 'Cadastrar'}
+            {isSubmitting ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>

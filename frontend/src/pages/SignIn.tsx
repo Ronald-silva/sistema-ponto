@@ -120,164 +120,168 @@ export function SignIn() {
   }
 
   return (
-    <div className="fixed inset-0 flex min-h-screen items-center justify-center bg-[--background]">
-      <div className="w-[360px] overflow-hidden rounded-xl bg-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.1)]">
-        {/* Header */}
-        <div className="border-b border-[--border] bg-white p-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-[--primary] p-2 text-white">
-              <Logo className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold text-[--text]">
-                Sistema de Ponto
-              </span>
-              <span className="text-sm text-[--text-secondary]">
-                Controle profissional de horas
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="space-y-6 p-6">
-          {/* User Type Selector */}
-          <div className="flex gap-2 rounded-lg border border-[--border] p-1">
-            <button
-              onClick={() => setUserType('ADMIN')}
-              className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-lg transition-all ${
-                userType === 'ADMIN'
-                  ? 'bg-[--primary] text-white shadow-sm'
-                  : 'text-[--text-secondary] hover:bg-[--background]'
-              }`}
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="font-medium">Admin</span>
-            </button>
-
-            <button
-              onClick={() => setUserType('EMPLOYEE')}
-              className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-lg transition-all ${
-                userType === 'EMPLOYEE'
-                  ? 'bg-[--primary] text-white shadow-sm'
-                  : 'text-[--text-secondary] hover:bg-[--background]'
-              }`}
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              <span className="font-medium">Funcionário</span>
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {userType === 'ADMIN' ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[--text-secondary]">
-                  Senha de Administrador
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Digite a senha"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
+    <div className="min-h-screen w-full bg-[--background] p-4 md:p-0">
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.1)] md:w-[400px]">
+          {/* Header */}
+          <div className="border-b border-[--border] bg-white p-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-[--primary] p-2.5 text-white">
+                <Logo className="h-6 w-6" />
               </div>
-            ) : (
-              <>
+              <div className="flex flex-col">
+                <span className="text-xl font-semibold text-[--text]">
+                  Sistema de Ponto
+                </span>
+                <span className="text-sm text-[--text-secondary]">
+                  Controle profissional de horas
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-6 p-6">
+            {/* User Type Selector */}
+            <div className="flex gap-2 rounded-lg border border-[--border] p-1.5">
+              <button
+                onClick={() => setUserType('ADMIN')}
+                className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-base transition-all ${
+                  userType === 'ADMIN'
+                    ? 'bg-[--primary] text-white shadow-sm'
+                    : 'text-[--text-secondary] hover:bg-[--background]'
+                }`}
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="font-medium">Admin</span>
+              </button>
+
+              <button
+                onClick={() => setUserType('EMPLOYEE')}
+                className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-base transition-all ${
+                  userType === 'EMPLOYEE'
+                    ? 'bg-[--primary] text-white shadow-sm'
+                    : 'text-[--text-secondary] hover:bg-[--background]'
+                }`}
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <span className="font-medium">Funcionário</span>
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {userType === 'ADMIN' ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[--text-secondary]">
-                    CPF do Funcionário
+                    Senha de Administrador
                   </label>
                   <Input
-                    type="text"
-                    value={cpf}
-                    onChange={e => setCpf(e.target.value)}
+                    type="password"
+                    placeholder="Digite a senha"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     disabled={isLoading}
-                    maxLength={11}
-                    placeholder="Digite seu CPF"
+                    className="h-11"
                   />
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[--text-secondary]">
+                      CPF do Funcionário
+                    </label>
+                    <Input
+                      type="text"
+                      value={cpf}
+                      onChange={e => setCpf(e.target.value)}
+                      disabled={isLoading}
+                      maxLength={11}
+                      placeholder="Digite seu CPF"
+                      className="h-11"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[--text-secondary]">
-                    Empresa
-                  </label>
-                  <select
-                    value={companyId}
-                    onChange={e => setCompanyId(e.target.value)}
-                    disabled={isLoading}
-                    className="h-9 w-full rounded-lg border border-[--border] bg-white px-3 text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Selecione uma empresa</option>
-                    {companiesList.map(company => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[--text-secondary]">
+                      Empresa
+                    </label>
+                    <select
+                      value={companyId}
+                      onChange={e => setCompanyId(e.target.value)}
+                      disabled={isLoading}
+                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione uma empresa</option>
+                      {companiesList.map(company => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[--text-secondary]">
-                    Obra
-                  </label>
-                  <select
-                    value={projectId}
-                    onChange={e => setProjectId(e.target.value)}
-                    disabled={isLoading || isLoadingProjects}
-                    className="h-9 w-full rounded-lg border border-[--border] bg-white px-3 text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Selecione uma obra</option>
-                    {projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                  {isLoadingProjects && (
-                    <p className="text-sm text-[--text-secondary]">Carregando obras...</p>
-                  )}
-                </div>
-              </>
-            )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[--text-secondary]">
+                      Obra
+                    </label>
+                    <select
+                      value={projectId}
+                      onChange={e => setProjectId(e.target.value)}
+                      disabled={isLoading || isLoadingProjects}
+                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-[--primary] focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione uma obra</option>
+                      {projects.map(project => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                    {isLoadingProjects && (
+                      <p className="text-sm text-[--text-secondary]">Carregando obras...</p>
+                    )}
+                  </div>
+                </>
+              )}
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Carregando...' : 'Entrar no Sistema'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="h-11 w-full text-base"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Carregando...' : 'Entrar no Sistema'}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

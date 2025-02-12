@@ -29,22 +29,32 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('@sistema-ponto:user')
-    return storedUser ? JSON.parse(storedUser) : null
-  })
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Verificar sessão atual do Supabase apenas para funcionários
-    if (user?.role === 'EMPLOYEE') {
+    // Verificar sessão atual do Supabase e localStorage
+    const storedUser = localStorage.getItem('@sistema-ponto:user')
+    const initialUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (initialUser?.role === 'EMPLOYEE') {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session?.user) {
-          // Se não há sessão no Supabase mas tem user no localStorage, fazer logout
-          signOut()
+          // Se não há sessão no Supabase, limpar localStorage
+          localStorage.removeItem('@sistema-ponto:user')
+          setUser(null)
+        } else {
+          setUser(initialUser)
         }
+        setLoading(false)
       })
+    } else if (initialUser) {
+      // Para admin, apenas verificar se existe no localStorage
+      setUser(initialUser)
+      setLoading(false)
+    } else {
+      setLoading(false)
     }
   }, [])
 

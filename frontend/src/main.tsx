@@ -6,6 +6,10 @@ import { AuthProvider } from './contexts/AuthContext'
 import { Router } from './Router'
 import { Toaster } from 'sonner'
 import './styles/global.css'
+import { clearSession } from './lib/clearSession'
+
+// Limpar sessão ao iniciar
+clearSession()
 
 const queryClient = new QueryClient({
   defaultOptions: {
