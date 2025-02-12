@@ -121,8 +121,17 @@ export function SignIn() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[--background] p-4 md:p-0">
-      <div className="flex min-h-screen items-center justify-center">
+    <div 
+      className="fixed inset-0 flex items-center justify-center p-4 md:p-0"
+      style={{
+        backgroundImage: 'url("/construction-tools.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="flex min-h-screen items-center justify-center relative">
         <div className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.1)] md:w-[400px]">
           {/* Header */}
           <div className="border-b border-[--border] bg-white p-6">
