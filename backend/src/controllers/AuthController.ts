@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { prisma } from '../lib/prisma'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
@@ -63,43 +64,64 @@ export class AuthController {
     }
 
     try {
-      // Simular funcionário (temporário)
-      const employee = {
-        id: '123',
-        name: 'João da Silva',
-        cpf,
-        role: 'EMPLOYEE'
+      // Buscar funcionário pelo CPF
+      const employee = await prisma.employee.findUnique({
+        where: { cpf },
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          active: true
+        }
+      })
+
+      if (!employee) {
+        return response.status(401).json({ error: 'Funcionário não encontrado' })
       }
 
-      // Simular projeto (temporário)
-      const project = {
-        id: projectId,
-        name: 'Obra 1'
+      if (!employee.active) {
+        return response.status(401).json({ error: 'Funcionário inativo' })
       }
 
-      // Lista de empresas
-      const companies = [
-        { id: '1', name: 'CDG Engenharia' },
-        { id: '2', name: 'Urban Engenharia' },
-        { id: '3', name: 'Consórcio Aquiraz PDD' },
-        { id: '4', name: 'Consórcio BCL' },
-        { id: '5', name: 'Consórcio BME' },
-        { id: '6', name: 'Consórcio BBJ' }
-      ]
-      const company = companies.find(c => c.id === companyId)
+      // Buscar projeto
+      const project = await prisma.project.findUnique({
+        where: { 
+          id: projectId,
+          active: true
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      })
+
+      if (!project) {
+        return response.status(401).json({ error: 'Projeto não encontrado ou inativo' })
+      }
+
+      // Buscar empresa
+      const company = await prisma.company.findUnique({
+        where: { 
+          id: companyId,
+          active: true
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      })
 
       if (!company) {
-        return response.status(404).json({ error: 'Empresa não encontrada' })
+        return response.status(401).json({ error: 'Empresa não encontrada ou inativa' })
       }
 
-      // Gerar token JWT
+      // Gerar token
       const token = jwt.sign(
         { 
           id: employee.id,
-          role: employee.role,
-          cpf: employee.cpf,
-          projectId,
-          companyId
+          role: 'EMPLOYEE',
+          projectId: project.id,
+          companyId: company.id
         },
         JWT_SECRET,
         { 

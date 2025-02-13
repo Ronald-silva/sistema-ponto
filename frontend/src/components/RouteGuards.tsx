@@ -1,15 +1,15 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 interface RouteGuardProps {
-  children: React.ReactNode
 }
 
-export function PrivateRoute({ children }: RouteGuardProps) {
-  const token = localStorage.getItem('sb-eyevyovjlxycqixkvxoz-auth-token')
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+export function PrivateRoute() {
+  const { user } = useAuth()
+  return user ? <Outlet /> : <Navigate to="/sign-in" replace />
 }
 
-export function PublicRoute({ children }: RouteGuardProps) {
-  const token = localStorage.getItem('sb-eyevyovjlxycqixkvxoz-auth-token')
-  return !token ? <>{children}</> : <Navigate to="/dashboard" replace />
+export function PublicRoute() {
+  const { user } = useAuth()
+  return !user ? <Outlet /> : <Navigate to="/dashboard" replace />
 }

@@ -1,24 +1,16 @@
 import { Request, Response } from 'express'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://eyevyovjlxycqixkvxoz.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZXZ5b3ZqbHh5Y3FpeGt2eG96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3MDUxOTgsImV4cCI6MjA1NDI4MTE5OH0.TK0CCZ0f6QxiS8TPsowqI4p7GhdTn6hObN86XYqDt94'
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+import { prisma } from '../lib/prisma'
 
 export class ProjectController {
   async index(request: Request, response: Response) {
     const { userId } = request.query;
 
     try {
-      const { data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao listar projetos' })
-      }
+      const projects = await prisma.project.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
 
       if (userId) {
         const filteredProjects = projects.filter(project => project.users.some(user => user.userId === userId))
@@ -33,18 +25,12 @@ export class ProjectController {
   }
 
   async show(request: Request, response: Response) {
-    const { id } = request.params;
+    const { id } = request.params
 
     try {
-      const { data: project, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao buscar projeto' })
-      }
+      const project = await prisma.project.findUnique({
+        where: { id }
+      })
 
       if (!project) {
         return response.status(404).json({ error: 'Projeto não encontrado' })
@@ -61,23 +47,15 @@ export class ProjectController {
     const { name, description, startDate, endDate, active = true } = request.body
 
     try {
-      const { data: project, error } = await supabase
-        .from('projects')
-        .insert([
-          {
-            name,
-            description,
-            start_date: startDate,
-            end_date: endDate,
-            active
-          }
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao criar projeto' })
-      }
+      const project = await prisma.project.create({
+        data: {
+          name,
+          description,
+          startDate,
+          endDate,
+          active
+        }
+      })
 
       return response.status(201).json(project)
     } catch (error) {
@@ -91,22 +69,16 @@ export class ProjectController {
     const { name, description, startDate, endDate, active } = request.body
 
     try {
-      const { data: project, error } = await supabase
-        .from('projects')
-        .update({
+      const project = await prisma.project.update({
+        where: { id },
+        data: {
           name,
           description,
-          start_date: startDate,
-          end_date: endDate,
+          startDate,
+          endDate,
           active
-        })
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao atualizar projeto' })
-      }
+        }
+      })
 
       return response.json(project)
     } catch (error) {
@@ -119,14 +91,9 @@ export class ProjectController {
     const { id } = request.params
 
     try {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao excluir projeto' })
-      }
+      await prisma.project.delete({
+        where: { id }
+      })
 
       return response.status(204).send()
     } catch (error) {
@@ -141,21 +108,13 @@ export class ProjectController {
     const adminId = request.user!.id
 
     try {
-      const { data: userProject, error } = await supabase
-        .from('usersOnProjects')
-        .insert([
-          {
-            userId,
-            projectId: id,
-            assignedBy: adminId
-          }
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao adicionar usuário ao projeto' })
-      }
+      const userProject = await prisma.usersOnProjects.create({
+        data: {
+          userId,
+          projectId: id,
+          assignedBy: adminId
+        }
+      })
 
       return response.status(201).json(userProject)
     } catch (error) {
@@ -168,19 +127,38 @@ export class ProjectController {
     const { id, userId } = request.params
 
     try {
-      const { error } = await supabase
-        .from('usersOnProjects')
-        .delete()
-        .eq('userId', userId)
-        .eq('projectId', id)
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao remover usuário do projeto' })
-      }
+      await prisma.usersOnProjects.delete({
+        where: {
+          userId,
+          projectId: id
+        }
+      })
 
       return response.status(204).send()
     } catch (error) {
       console.error('Erro ao remover usuário do projeto:', error)
+      return response.status(500).json({ error: 'Erro interno do servidor' })
+    }
+  }
+
+  async active(request: Request, response: Response) {
+    try {
+      const projects = await prisma.project.findMany({
+        where: {
+          active: true
+        },
+        select: {
+          id: true,
+          name: true
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      })
+
+      return response.json(projects)
+    } catch (error) {
+      console.error('Erro ao listar projetos ativos:', error)
       return response.status(500).json({ error: 'Erro interno do servidor' })
     }
   }

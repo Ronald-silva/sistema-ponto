@@ -101,54 +101,46 @@ export function useEmployees() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+      toast.success('Funcionário cadastrado com sucesso!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
     }
   })
 
   const updateEmployee = useMutation({
-    mutationFn: async ({ id, ...data }: CreateEmployeeData & { id: string }) => {
-      // Verifica se já existe outro usuário com este CPF
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('cpf', data.cpf)
-        .neq('id', id)
-        .single()
-
-      if (existingUser) {
-        throw new Error('Já existe outro funcionário cadastrado com este CPF')
-      }
-
-      // Atualiza o registro na tabela users
-      const { data: userData, error: userError } = await supabase
+    mutationFn: async (data: Employee) => {
+      const { data: updatedUser, error } = await supabase
         .from('users')
         .update({
           name: data.name,
-          cpf: data.cpf,
           role: data.role,
-          active: data.active,
           salary: data.salary,
           birth_date: data.birth_date,
           admission_date: data.admission_date
         })
-        .eq('id', id)
+        .eq('id', data.id)
         .select()
         .single()
 
-      if (userError) {
-        console.error('Erro ao atualizar funcionário:', userError)
-        throw new Error(`Erro ao atualizar funcionário: ${userError.message}`)
+      if (error) {
+        console.error('Erro ao atualizar funcionário:', error)
+        throw new Error(`Erro ao atualizar funcionário: ${error.message}`)
       }
 
-      return userData
+      return updatedUser
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+      toast.success('Funcionário atualizado com sucesso!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
     }
   })
 
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
-      // Não deleta realmente, apenas marca como inativo
       const { error } = await supabase
         .from('users')
         .update({ active: false })
@@ -161,6 +153,10 @@ export function useEmployees() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+      toast.success('Funcionário excluído com sucesso!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
     }
   })
 

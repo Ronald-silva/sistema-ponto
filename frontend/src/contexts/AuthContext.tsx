@@ -28,10 +28,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('@sistema-ponto:user')
-    return storedUser ? JSON.parse(storedUser) : null
-  })
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -61,36 +58,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setUser(adminUser)
-        localStorage.setItem('@sistema-ponto:user', JSON.stringify(adminUser))
         navigate('/dashboard')
-      } else {
-        if (!cpf) {
-          throw new Error('CPF é obrigatório')
-        }
 
-        if (!projectId) {
-          throw new Error('Selecione uma obra')
-        }
-
-        if (!companyId) {
-          throw new Error('Selecione uma empresa')
-        }
-
-        const employeeUser = {
-          id: 'employee-id',
-          role: 'EMPLOYEE' as const,
-          name: 'João da Silva',
-          cpf,
-          projectId,
-          projectName: 'Obra 1',
-          companyId,
-          companyName: 'CDG Engenharia'
-        }
-
-        setUser(employeeUser)
-        localStorage.setItem('@sistema-ponto:user', JSON.stringify(employeeUser))
-        navigate('/time-entry')
+        return
       }
+
+      if (!cpf) {
+        throw new Error('CPF é obrigatório')
+      }
+
+      if (!projectId) {
+        throw new Error('Selecione uma obra')
+      }
+
+      if (!companyId) {
+        throw new Error('Selecione uma empresa')
+      }
+
+      const employeeUser = {
+        id: 'employee-id',
+        role: 'EMPLOYEE' as const,
+        name: 'João da Silva',
+        cpf,
+        projectId,
+        projectName: 'Obra 1',
+        companyId,
+        companyName: 'CDG Engenharia'
+      }
+
+      setUser(employeeUser)
+      navigate('/time-entry')
     } catch (err: any) {
       console.error('Erro no login:', err)
       throw err
@@ -100,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
-    localStorage.removeItem('@sistema-ponto:user')
     setUser(null)
     navigate('/sign-in')
   }

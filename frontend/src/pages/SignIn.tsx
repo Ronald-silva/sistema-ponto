@@ -7,6 +7,11 @@ import { toast } from 'sonner'
 
 type UserType = 'ADMIN' | 'EMPLOYEE'
 
+interface Project {
+  id: string
+  name: string
+}
+
 const companies = [
   { id: '1', name: 'CDG Engenharia' },
   { id: '2', name: 'Urban Engenharia' },
@@ -29,11 +34,13 @@ export function SignIn() {
   const [projectId, setProjectId] = useState('')
   const [companyId, setCompanyId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const { signIn } = useAuth()
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
+    setError('')
 
     try {
       setIsLoading(true)
@@ -67,7 +74,8 @@ export function SignIn() {
       })
     } catch (err: any) {
       console.error('Erro no login:', err)
-      toast.error(err.message || 'Erro ao fazer login')
+      setError(err.response?.data?.error || err.message || 'Erro ao fazer login')
+      toast.error(err.response?.data?.error || err.message || 'Erro ao fazer login')
     } finally {
       setIsLoading(false)
     }
