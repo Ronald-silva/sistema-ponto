@@ -80,19 +80,17 @@ export class TimeRecordController {
   async create(request: Request, response: Response) {
     const { projectId, timestamp, type } = request.body;
     const imageBuffer = request.file?.buffer;
+    const userId = request.user?.id; // Pegar userId do token JWT
+
+    if (!userId) {
+      return response.status(401).json({ error: 'Usuário não autenticado' });
+    }
 
     if (!imageBuffer) {
       return response.status(400).json({ error: 'Imagem não fornecida' });
     }
 
     try {
-      // Verifica o rosto do funcionário
-      const userId = await this.faceRecognitionService.verifyFace(imageBuffer);
-
-      if (!userId) {
-        return response.status(401).json({ error: 'Rosto não reconhecido' });
-      }
-
       // Verifica se o usuário está vinculado ao projeto
       const userProject = await prisma.usersOnProjects.findUnique({
         where: {

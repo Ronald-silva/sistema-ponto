@@ -1,4 +1,15 @@
 import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+
+interface TokenPayload {
+  id: string
+  role: 'ADMIN' | 'EMPLOYEE'
+  cpf?: string
+  projectId?: string
+  companyId?: string
+}
 
 export async function authMiddleware(
   request: Request,
@@ -13,29 +24,22 @@ export async function authMiddleware(
 
   const [, token] = authorization.split(' ')
 
-  // ID fixo do admin que definimos no frontend
-  const adminId = 'd504a949-b481-40be-a675-1528388986aa2'
-
   try {
-    if (token === adminId) {
-      request.user = {
-        id: adminId,
-        role: 'ADMIN'
-      }
-      return next()
+    // Verificar token JWT
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload
+
+    // Adicionar dados do usuário ao request
+    request.user = {
+      id: decoded.id,
+      role: decoded.role,
+      cpf: decoded.cpf,
+      projectId: decoded.projectId,
+      companyId: decoded.companyId
     }
 
-    // TODO: Implementar verificação de funcionário
-    if (token === 'temp-employee-id') {
-      request.user = {
-        id: token,
-        role: 'EMPLOYEE'
-      }
-      return next()
-    }
-
-    return response.status(401).json({ error: 'Token inválido' })
+    return next()
   } catch (err) {
+    console.error('Erro ao validar token:', err)
     return response.status(401).json({ error: 'Token inválido' })
   }
 }

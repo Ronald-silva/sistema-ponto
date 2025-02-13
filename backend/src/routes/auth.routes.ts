@@ -10,8 +10,8 @@ authRoutes.get('/test', (req, res) => {
 });
 
 // Rotas de autenticação
-authRoutes.post('/login', authController.login);
-authRoutes.post('/employee', authController.loginEmployee);
-authRoutes.post('/register', authController.register);
+authRoutes.post('/login', (req, res) => authController.login(req, res));
+authRoutes.post('/employee', (req, res) => authController.loginEmployee(req, res));
+authRoutes.post('/register', (req, res) => authController.register(req, res));
 
 export { authRoutes };

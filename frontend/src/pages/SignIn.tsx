@@ -1,29 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Logo } from '../components/Logo'
 import { toast } from 'sonner'
-import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@supabase/supabase-js'
-import constructionTools from '/construction-tools.jpg'
-
-const supabase = createClient(
-  'https://eyevyovjlxycqixkvxoz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZXZ5b3ZqbHh5Y3FpeGt2eG96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3MDUxOTgsImV4cCI6MjA1NDI4MTE5OH0.TK0CCZ0f6QxiS8TPsowqI4p7GhdTn6hObN86XYqDt94'
-)
 
 type UserType = 'ADMIN' | 'EMPLOYEE'
-
-interface Project {
-  id: string
-  name: string
-}
-
-interface Company {
-  id: string
-  name: string
-}
 
 const companies = [
   { id: '1', name: 'CDG Engenharia' },
@@ -34,54 +16,24 @@ const companies = [
   { id: '6', name: 'Consórcio BBJ' }
 ]
 
+const projects = [
+  { id: '1', name: 'Obra 1' },
+  { id: '2', name: 'Obra 2' },
+  { id: '3', name: 'Obra 3' }
+]
+
 export function SignIn() {
   const [userType, setUserType] = useState<UserType>('ADMIN')
   const [password, setPassword] = useState('')
   const [cpf, setCpf] = useState('')
   const [projectId, setProjectId] = useState('')
   const [companyId, setCompanyId] = useState('')
-  const [projects, setProjects] = useState<Project[]>([])
-  const [companiesList, setCompaniesList] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false)
-  const [error, setError] = useState('')
 
   const { signIn } = useAuth()
 
-  const { data: projectsData, isLoading: isLoadingProjectsQuery } = useQuery<Project[]>({
-    queryKey: ['projects', 'active'],
-    queryFn: async () => {
-      console.log('Buscando projetos...')
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('active', true)
-        .order('name')
-
-      if (error) {
-        console.error('Erro ao buscar projetos:', error)
-        throw error
-      }
-      console.log('Projetos encontrados:', data)
-      return data || []
-    },
-    enabled: userType === 'EMPLOYEE'
-  })
-
-  useEffect(() => {
-    console.log('Projects Data:', projectsData)
-    console.log('Is Loading Projects Query:', isLoadingProjectsQuery)
-    setProjects(projectsData || [])
-    setIsLoadingProjects(isLoadingProjectsQuery)
-  }, [projectsData, isLoadingProjectsQuery])
-
-  useEffect(() => {
-    setCompaniesList(companies)
-  }, [])
-
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    setError('')
 
     try {
       setIsLoading(true)
@@ -114,7 +66,8 @@ export function SignIn() {
         companyId: userType === 'EMPLOYEE' ? companyId : undefined
       })
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login')
+      console.error('Erro no login:', err)
+      toast.error(err.message || 'Erro ao fazer login')
     } finally {
       setIsLoading(false)
     }
@@ -247,7 +200,7 @@ export function SignIn() {
                       className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Selecione uma empresa</option>
-                      {companiesList.map(company => (
+                      {companies.map(company => (
                         <option key={company.id} value={company.id}>
                           {company.name}
                         </option>
@@ -262,7 +215,7 @@ export function SignIn() {
                     <select
                       value={projectId}
                       onChange={e => setProjectId(e.target.value)}
-                      disabled={isLoading || isLoadingProjects}
+                      disabled={isLoading}
                       className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Selecione uma obra</option>
@@ -272,15 +225,8 @@ export function SignIn() {
                         </option>
                       ))}
                     </select>
-                    {isLoadingProjects && (
-                      <p className="text-sm text-[--text-secondary]">Carregando obras...</p>
-                    )}
                   </div>
                 </>
-              )}
-
-              {error && (
-                <p className="text-sm text-red-600">{error}</p>
               )}
 
               <Button

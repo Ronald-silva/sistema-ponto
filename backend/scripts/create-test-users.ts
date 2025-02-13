@@ -16,12 +16,23 @@ async function main() {
 
     console.log('Roles existentes:', roles);
 
+    // Limpar todos os usuários
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .not('id', 'is', null);
+
+    if (deleteError) {
+      console.error('Erro ao limpar usuários:', deleteError);
+      throw deleteError;
+    }
+
     // Criar usuário admin
     const adminData = {
       name: 'Administrador',
-      cpf: '222.222.222-22',
+      cpf: '11111111111', 
       role: 'SUPERVISOR ADM II',
-      salary: '15000',
+      salary: 15000,
       birth_date: '1990-01-01',
       admission_date: '2024-01-01'
     };
@@ -43,9 +54,9 @@ async function main() {
     // Criar usuário normal
     const userData = {
       name: 'José da Silva',
-      cpf: '333.333.333-33',
-      role: 'SERVICOS GERAIS I',
-      salary: '3000',
+      cpf: '33333333333',
+      role: 'SERVENTE',
+      salary: 3000,
       birth_date: '1995-01-01',
       admission_date: '2024-01-01'
     };

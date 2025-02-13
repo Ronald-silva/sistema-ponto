@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { authRoutes } from './routes/auth.routes'
 import { projectsRoutes } from './routes/projects.routes'
+import { timeRecordRoutes } from './routes/timeRecord.routes'
 
 const app = express()
 
@@ -25,6 +26,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 // Rotas
 app.use('/auth', authRoutes)
 app.use('/projects', projectsRoutes)
+app.use('/time-records', timeRecordRoutes)
 
 // Middleware de erro
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -1,119 +1,131 @@
 import { Request, Response } from 'express'
-import { createClient } from '@supabase/supabase-js'
+import jwt from 'jsonwebtoken'
 
-const supabaseUrl = 'https://eyevyovjlxycqixkvxoz.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZXZ5b3ZqbHh5Y3FpeGt2eG96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3MDUxOTgsImV4cCI6MjA1NDI4MTE5OH0.TK0CCZ0f6QxiS8TPsowqI4p7GhdTn6hObN86XYqDt94'
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 export class AuthController {
   async login(request: Request, response: Response) {
-    const { password } = request.body
-
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'admin@example.com',
-        password
-      })
+      const { password } = request.body
 
-      if (error) {
-        return response.status(401).json({ error: 'Credenciais inválidas' })
+      if (!password) {
+        return response.status(400).json({ error: 'Senha é obrigatória' })
       }
 
-      return response.json({
-        user: {
-          id: data.user.id,
-          role: 'ADMIN'
+      if (password !== 'admin123') {
+        return response.status(401).json({ error: 'Senha incorreta' })
+      }
+
+      const adminUser = {
+        id: 'd504a949-b481-40be-a675-1528388986aa2',
+        role: 'ADMIN',
+        name: 'Administrador'
+      }
+
+      const token = jwt.sign(
+        { 
+          id: adminUser.id,
+          role: adminUser.role
         },
-        token: data.session?.access_token
+        JWT_SECRET,
+        { 
+          expiresIn: '1d'
+        }
+      )
+
+      return response.json({
+        token,
+        user: adminUser
       })
     } catch (error) {
-      console.error('Erro ao fazer login:', error)
+      console.error('Erro no login:', error)
       return response.status(500).json({ error: 'Erro interno do servidor' })
     }
   }
 
   async loginEmployee(request: Request, response: Response) {
-    const { cpf, projectId } = request.body
+    const { cpf: rawCpf, projectId, companyId } = request.body
+    // Normalizar CPF removendo pontos e traços
+    const cpf = rawCpf.replace(/\D/g, '')
+    
+    console.log('Tentativa de login:', { cpf, projectId, companyId })
 
-    if (!cpf || !projectId) {
-      return response.status(400).json({ error: 'CPF e projeto são obrigatórios' })
+    if (!cpf) {
+      return response.status(400).json({ error: 'CPF é obrigatório' })
+    }
+
+    if (!projectId) {
+      return response.status(400).json({ error: 'Projeto é obrigatório' })
+    }
+
+    if (!companyId) {
+      return response.status(400).json({ error: 'Empresa é obrigatória' })
     }
 
     try {
-      // Buscar funcionário pelo CPF
-      const { data: employee, error: employeeError } = await supabase
-        .from('users')
-        .select('id, name')
-        .eq('cpf', cpf)
-        .single()
-
-      if (employeeError || !employee) {
-        console.error('Erro ao buscar funcionário:', employeeError)
-        return response.status(401).json({ error: 'Funcionário não encontrado' })
+      // Simular funcionário (temporário)
+      const employee = {
+        id: '123',
+        name: 'João da Silva',
+        cpf,
+        role: 'EMPLOYEE'
       }
 
-      // Verificar se o funcionário está associado ao projeto
-      const { data: projectUser, error: projectError } = await supabase
-        .from('user_projects')
-        .select('*')
-        .eq('user_id', employee.id)
-        .eq('project_id', projectId)
-        .eq('active', true)
-        .single()
-
-      if (projectError || !projectUser) {
-        console.error('Erro ao verificar projeto:', projectError)
-        return response.status(401).json({ error: 'Funcionário não está associado a este projeto' })
+      // Simular projeto (temporário)
+      const project = {
+        id: projectId,
+        name: 'Obra 1'
       }
+
+      // Lista de empresas
+      const companies = [
+        { id: '1', name: 'CDG Engenharia' },
+        { id: '2', name: 'Urban Engenharia' },
+        { id: '3', name: 'Consórcio Aquiraz PDD' },
+        { id: '4', name: 'Consórcio BCL' },
+        { id: '5', name: 'Consórcio BME' },
+        { id: '6', name: 'Consórcio BBJ' }
+      ]
+      const company = companies.find(c => c.id === companyId)
+
+      if (!company) {
+        return response.status(404).json({ error: 'Empresa não encontrada' })
+      }
+
+      // Gerar token JWT
+      const token = jwt.sign(
+        { 
+          id: employee.id,
+          role: employee.role,
+          cpf: employee.cpf,
+          projectId,
+          companyId
+        },
+        JWT_SECRET,
+        { 
+          expiresIn: '1d'
+        }
+      )
 
       return response.json({
+        token,
         user: {
           id: employee.id,
           name: employee.name,
+          cpf: employee.cpf,
           role: 'EMPLOYEE'
+        },
+        project: {
+          id: project.id,
+          name: project.name
+        },
+        company: {
+          id: company.id,
+          name: company.name
         }
       })
     } catch (error) {
-      console.error('Erro ao fazer login:', error)
-      return response.status(500).json({ error: 'Erro interno do servidor' })
-    }
-  }
-
-  async register(request: Request, response: Response) {
-    const { name, email, password, role = 'EMPLOYEE' } = request.body
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error) {
-        return response.status(400).json({ error: 'Erro ao criar conta' })
-      }
-
-      // Criar usuário no banco de dados
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: data.user.id,
-            name,
-            email,
-            role,
-          },
-        ])
-        .select()
-        .single()
-
-      if (userError) {
-        return response.status(400).json({ error: 'Erro ao criar usuário' })
-      }
-
-      return response.status(201).json(user)
-    } catch (error) {
-      console.error('Erro ao registrar:', error)
+      console.error('Erro no login:', error)
       return response.status(500).json({ error: 'Erro interno do servidor' })
     }
   }
