@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Logo } from '../components/Logo'
 import { toast } from 'sonner'
+import { api } from '../lib/api'
 
 type UserType = 'ADMIN' | 'EMPLOYEE'
 
@@ -21,12 +22,6 @@ const companies = [
   { id: '6', name: 'Consórcio BBJ' }
 ]
 
-const projects = [
-  { id: '1', name: 'Obra 1' },
-  { id: '2', name: 'Obra 2' },
-  { id: '3', name: 'Obra 3' }
-]
-
 export function SignIn() {
   const [userType, setUserType] = useState<UserType>('ADMIN')
   const [password, setPassword] = useState('')
@@ -35,8 +30,22 @@ export function SignIn() {
   const [companyId, setCompanyId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [projects, setProjects] = useState<Project[]>([])
 
   const { signIn } = useAuth()
+
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const response = await api.get('/projects/active')
+        setProjects(response.data)
+      } catch (error) {
+        console.error('Erro ao carregar projetos:', error)
+      }
+    }
+
+    loadProjects()
+  }, [])
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -55,12 +64,14 @@ export function SignIn() {
           toast.error('CPF é obrigatório')
           return
         }
-        if (!projectId) {
-          toast.error('Selecione uma obra')
-          return
-        }
+
         if (!companyId) {
           toast.error('Selecione uma empresa')
+          return
+        }
+
+        if (!projectId) {
+          toast.error('Selecione uma obra')
           return
         }
       }

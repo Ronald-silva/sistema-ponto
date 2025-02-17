@@ -4,15 +4,97 @@ import { DateTime } from '../components/DateTime'
 import { toast } from 'sonner'
 import Webcam from 'react-webcam'
 import { ArrowRightOnRectangleIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline'
+import * as faceapi from '@vladmandic/face-api'
 
 export function TimeEntry() {
   const { user, signOut } = useAuth()
   const webcamRef = useRef<Webcam>(null)
   const [lastEntry, setLastEntry] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFaceDetected, setIsFaceDetected] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // Carregar modelos do face-api
+  useEffect(() => {
+    async function loadModels() {
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models')
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+      } catch (error) {
+        console.error('Erro ao carregar modelos:', error)
+        toast.error('Erro ao inicializar reconhecimento facial')
+      }
+    }
+
+    loadModels()
+  }, [])
+
+  // Detectar rosto em tempo real
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    async function detectFace() {
+      if (webcamRef.current && webcamRef.current.video) {
+        const video = webcamRef.current.video
+
+        if (video.readyState === 4) {
+          const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+
+          setIsFaceDetected(!!detection)
+        }
+      }
+    }
+
+    interval = setInterval(detectFace, 100)
+
+    return () => clearInterval(interval)
+  }, [])
 
   async function handleTimeEntry(entryType: 'ENTRY' | 'EXIT') {
+    if (isProcessing) return
+    
     try {
-      // Simular registro de ponto
+      setIsProcessing(true)
+      setIsLoading(true)
+
+      if (!webcamRef.current?.video) {
+        throw new Error('Câmera não inicializada')
+      }
+
+      // Verificar se há um rosto na imagem
+      const detection = await faceapi
+        .detectSingleFace(webcamRef.current.video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+
+      if (!detection) {
+        throw new Error('Nenhum rosto detectado')
+      }
+
+      // Capturar imagem da webcam
+      const screenshot = webcamRef.current.getScreenshot()
+      if (!screenshot) {
+        throw new Error('Erro ao capturar imagem')
+      }
+
+      // Enviar para o backend
+      const formData = new FormData()
+      formData.append('image', dataURItoBlob(screenshot))
+      formData.append('userId', user!.id)
+      formData.append('type', entryType)
+
+      const response = await fetch('/api/time-records', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao registrar ponto')
+      }
+
+      // Atualizar último registro
       const now = new Date()
       const timeStr = now.toLocaleTimeString('pt-BR', {
         hour: '2-digit',
@@ -22,8 +104,25 @@ export function TimeEntry() {
       toast.success(`${entryType === 'ENTRY' ? 'Entrada' : 'Saída'} registrada com sucesso!`)
     } catch (error) {
       console.error('Erro ao registrar ponto:', error)
-      toast.error('Erro ao registrar ponto')
+      toast.error(error instanceof Error ? error.message : 'Erro ao registrar ponto')
+    } finally {
+      setIsLoading(false)
+      setIsProcessing(false)
     }
+  }
+
+  // Converter Data URI para Blob
+  function dataURItoBlob(dataURI: string) {
+    const byteString = atob(dataURI.split(',')[1])
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+    const ab = new ArrayBuffer(byteString.length)
+    const ia = new Uint8Array(ab)
+    
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i)
+    }
+    
+    return new Blob([ab], { type: mimeString })
   }
 
   if (!user) {
@@ -92,31 +191,33 @@ export function TimeEntry() {
                 
                 {/* Center Guide */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-48 h-48 border-2 border-dashed border-white/20 rounded-full" />
-                  <div className="absolute w-44 h-44 border border-white/10 rounded-full" />
-                  <div className="absolute w-40 h-40 border border-white/10 rounded-full" />
+                  <div className={`w-48 h-48 border-2 border-dashed transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/50' : 'border-white/20'}`} />
+                  <div className={`absolute w-44 h-44 border transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/30' : 'border-white/10'}`} />
+                  <div className={`absolute w-40 h-40 border transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/20' : 'border-white/10'}`} />
                 </div>
 
-                {/* Scanning Line Animation */}
+                {/* Scanning Animation */}
                 <div className="absolute inset-x-0 h-0.5 bg-blue-400/30 animate-scan" />
               </div>
 
               {/* Camera Icon when no image */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-white/20"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
+              {!webcamRef.current?.video && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 text-white/20"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              )}
 
               {/* Webcam */}
               <Webcam
@@ -126,8 +227,15 @@ export function TimeEntry() {
                 className="absolute inset-0 h-full w-full object-cover"
               />
 
+              {/* Loading Overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                </div>
+              )}
+
               {/* Focus Border Animation */}
-              <div className="absolute inset-0 border-2 border-transparent animate-focus" />
+              <div className={`absolute inset-0 border-2 transition-colors duration-200 ${isFaceDetected ? 'border-emerald-400/50' : 'border-transparent'} animate-focus`} />
             </div>
           </div>
 
@@ -136,7 +244,8 @@ export function TimeEntry() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleTimeEntry('ENTRY')}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 font-medium text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                disabled={isLoading || isProcessing || !isFaceDetected}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 font-medium text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowRightOnRectangleIcon className="h-4 w-4" />
                 <span className="text-sm">Registrar Entrada</span>
@@ -144,7 +253,8 @@ export function TimeEntry() {
 
               <button
                 onClick={() => handleTimeEntry('EXIT')}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 font-medium text-white transition-colors hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                disabled={isLoading || isProcessing || !isFaceDetected}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 font-medium text-white transition-colors hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowLeftOnRectangleIcon className="h-4 w-4" />
                 <span className="text-sm">Registrar Saída</span>
