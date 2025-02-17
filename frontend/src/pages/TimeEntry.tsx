@@ -12,83 +12,59 @@ export function TimeEntry() {
   const [lastEntry, setLastEntry] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isFaceDetected, setIsFaceDetected] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
 
-  // Carregar modelos do face-api
+  // Carregar modelo de detecção facial
   useEffect(() => {
-    async function loadModels() {
+    async function loadModel() {
       try {
-        const MODEL_URL = '/models'
-        await faceapi.loadTinyFaceDetectorModel(MODEL_URL)
-        console.log('Modelo carregado com sucesso')
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
       } catch (error) {
-        console.error('Erro ao carregar modelos:', error)
-        toast.error('Erro ao inicializar reconhecimento facial')
+        console.error('Erro ao carregar modelo:', error)
       }
     }
-
-    loadModels()
+    loadModel()
   }, [])
 
-  // Detectar rosto em tempo real
+  // Detectar rosto
   useEffect(() => {
     let interval: NodeJS.Timeout
-    let isProcessing = false
 
     async function detectFace() {
-      if (isProcessing) return
       if (!webcamRef.current?.video) return
       const video = webcamRef.current.video
-      if (video.readyState !== 4) return
-
+      
       try {
-        isProcessing = true
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
-        const result = await faceapi.detectSingleFace(video, options)
-        setIsFaceDetected(!!result)
+        const detection = await faceapi.detectSingleFace(
+          video,
+          new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+        )
+        setIsFaceDetected(!!detection)
       } catch (error) {
-        console.error('Erro na detecção:', error)
         setIsFaceDetected(false)
-      } finally {
-        isProcessing = false
       }
     }
 
-    interval = setInterval(detectFace, 1000)
-
+    interval = setInterval(detectFace, 500)
     return () => clearInterval(interval)
   }, [])
 
-  async function handleTimeEntry(entryType: 'ENTRY' | 'EXIT') {
-    if (isProcessing) return
+  async function handleTimeEntry(type: 'ENTRY' | 'EXIT') {
+    if (!webcamRef.current?.video || !isFaceDetected) return
     
     try {
-      setIsProcessing(true)
       setIsLoading(true)
 
-      if (!webcamRef.current?.video) {
-        throw new Error('Câmera não inicializada')
-      }
-
-      // Verificar se há um rosto na imagem
-      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
-      const result = await faceapi.detectSingleFace(webcamRef.current.video, options)
-
-      if (!result) {
-        throw new Error('Nenhum rosto detectado')
-      }
-
-      // Capturar imagem da webcam
+      // Capturar foto
       const screenshot = webcamRef.current.getScreenshot()
       if (!screenshot) {
-        throw new Error('Erro ao capturar imagem')
+        throw new Error('Erro ao capturar foto')
       }
 
       // Enviar para o backend
       const formData = new FormData()
       formData.append('image', dataURItoBlob(screenshot))
       formData.append('userId', user!.id)
-      formData.append('type', entryType)
+      formData.append('type', type)
 
       const response = await fetch('/api/time-records', {
         method: 'POST',
@@ -105,18 +81,15 @@ export function TimeEntry() {
         hour: '2-digit',
         minute: '2-digit'
       })
-      setLastEntry(`${entryType === 'ENTRY' ? 'Entrada' : 'Saída'} registrada às ${timeStr}`)
-      toast.success(`${entryType === 'ENTRY' ? 'Entrada' : 'Saída'} registrada com sucesso!`)
+      setLastEntry(`${type === 'ENTRY' ? 'Entrada' : 'Saída'} registrada às ${timeStr}`)
+      toast.success(`${type === 'ENTRY' ? 'Entrada' : 'Saída'} registrada com sucesso!`)
     } catch (error) {
-      console.error('Erro ao registrar ponto:', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao registrar ponto')
     } finally {
       setIsLoading(false)
-      setIsProcessing(false)
     }
   }
 
-  // Converter Data URI para Blob
   function dataURItoBlob(dataURI: string) {
     const byteString = atob(dataURI.split(',')[1])
     const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
@@ -130,9 +103,7 @@ export function TimeEntry() {
     return new Blob([ab], { type: mimeString })
   }
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,7 +115,7 @@ export function TimeEntry() {
               Registro de Ponto
             </h1>
             <p className="mt-0.5 text-sm text-gray-600 truncate max-w-[240px] sm:max-w-none">
-              {user.name} • {user.projectName} • {user.companyName}
+              {user.name}
             </p>
           </div>
           <div className="flex items-center gap-3 sm:gap-6">
@@ -186,43 +157,12 @@ export function TimeEntry() {
               </p>
             </div>
             <div className="relative aspect-[4/3] bg-zinc-900">
-              {/* Camera Guidelines Overlay */}
+              {/* Camera Guidelines */}
               <div className="absolute inset-0 z-10 pointer-events-none">
-                {/* Corner Indicators */}
-                <div className="absolute top-3 left-3 w-3 h-3 border-l-2 border-t-2 border-white/30" />
-                <div className="absolute top-3 right-3 w-3 h-3 border-r-2 border-t-2 border-white/30" />
-                <div className="absolute bottom-3 left-3 w-3 h-3 border-l-2 border-b-2 border-white/30" />
-                <div className="absolute bottom-3 right-3 w-3 h-3 border-r-2 border-b-2 border-white/30" />
-                
-                {/* Center Guide */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`w-48 h-48 border-2 border-dashed transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/50' : 'border-white/20'}`} />
-                  <div className={`absolute w-44 h-44 border transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/30' : 'border-white/10'}`} />
-                  <div className={`absolute w-40 h-40 border transition-colors duration-200 rounded-full ${isFaceDetected ? 'border-emerald-400/20' : 'border-white/10'}`} />
+                <div className={`absolute inset-0 flex items-center justify-center transition-colors duration-200`}>
+                  <div className={`w-48 h-48 border-2 border-dashed rounded-full ${isFaceDetected ? 'border-emerald-400' : 'border-white/20'}`} />
                 </div>
-
-                {/* Scanning Animation */}
-                <div className="absolute inset-x-0 h-0.5 bg-blue-400/30 animate-scan" />
               </div>
-
-              {/* Camera Icon when no image */}
-              {!webcamRef.current?.video && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-white/20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              )}
 
               {/* Webcam */}
               <Webcam
@@ -232,8 +172,8 @@ export function TimeEntry() {
                 className="absolute inset-0 h-full w-full object-cover"
                 mirrored
                 videoConstraints={{
-                  width: 224,
-                  height: 224,
+                  width: 640,
+                  height: 480,
                   facingMode: "user"
                 }}
               />
@@ -244,9 +184,6 @@ export function TimeEntry() {
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 </div>
               )}
-
-              {/* Focus Border Animation */}
-              <div className={`absolute inset-0 border-2 transition-colors duration-200 ${isFaceDetected ? 'border-emerald-400/50' : 'border-transparent'} animate-focus`} />
             </div>
           </div>
 
@@ -255,8 +192,8 @@ export function TimeEntry() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleTimeEntry('ENTRY')}
-                disabled={isLoading || isProcessing || !isFaceDetected}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 font-medium text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !isFaceDetected}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 font-medium text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowRightOnRectangleIcon className="h-4 w-4" />
                 <span className="text-sm">Registrar Entrada</span>
@@ -264,8 +201,8 @@ export function TimeEntry() {
 
               <button
                 onClick={() => handleTimeEntry('EXIT')}
-                disabled={isLoading || isProcessing || !isFaceDetected}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 font-medium text-white transition-colors hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !isFaceDetected}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 font-medium text-white transition-colors hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowLeftOnRectangleIcon className="h-4 w-4" />
                 <span className="text-sm">Registrar Saída</span>

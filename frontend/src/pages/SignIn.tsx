@@ -37,7 +37,9 @@ export function SignIn() {
   useEffect(() => {
     async function loadProjects() {
       try {
+        console.log('Iniciando carregamento dos projetos...')
         const response = await api.get('/projects/active')
+        console.log('Resposta da API:', response.data)
         setProjects(response.data)
       } catch (error) {
         console.error('Erro ao carregar projetos:', error)
