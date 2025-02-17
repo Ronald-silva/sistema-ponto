@@ -4,7 +4,7 @@ import { DateTime } from '../components/DateTime'
 import { toast } from 'sonner'
 import Webcam from 'react-webcam'
 import { ArrowRightOnRectangleIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline'
-import * as faceapi from '@vladmandic/face-api'
+import * as faceapi from 'face-api.js'
 
 export function TimeEntry() {
   const { user, signOut } = useAuth()
@@ -18,9 +18,9 @@ export function TimeEntry() {
   useEffect(() => {
     async function loadModels() {
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models')
-        await faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+        const MODEL_URL = '/models'
+        await faceapi.loadTinyFaceDetectorModel(MODEL_URL)
+        console.log('Modelo carregado com sucesso')
       } catch (error) {
         console.error('Erro ao carregar modelos:', error)
         toast.error('Erro ao inicializar reconhecimento facial')
@@ -33,22 +33,28 @@ export function TimeEntry() {
   // Detectar rosto em tempo real
   useEffect(() => {
     let interval: NodeJS.Timeout
+    let isProcessing = false
 
     async function detectFace() {
-      if (webcamRef.current && webcamRef.current.video) {
-        const video = webcamRef.current.video
+      if (isProcessing) return
+      if (!webcamRef.current?.video) return
+      const video = webcamRef.current.video
+      if (video.readyState !== 4) return
 
-        if (video.readyState === 4) {
-          const detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-
-          setIsFaceDetected(!!detection)
-        }
+      try {
+        isProcessing = true
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+        const result = await faceapi.detectSingleFace(video, options)
+        setIsFaceDetected(!!result)
+      } catch (error) {
+        console.error('Erro na detecção:', error)
+        setIsFaceDetected(false)
+      } finally {
+        isProcessing = false
       }
     }
 
-    interval = setInterval(detectFace, 100)
+    interval = setInterval(detectFace, 1000)
 
     return () => clearInterval(interval)
   }, [])
@@ -65,11 +71,10 @@ export function TimeEntry() {
       }
 
       // Verificar se há um rosto na imagem
-      const detection = await faceapi
-        .detectSingleFace(webcamRef.current.video, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
+      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+      const result = await faceapi.detectSingleFace(webcamRef.current.video, options)
 
-      if (!detection) {
+      if (!result) {
         throw new Error('Nenhum rosto detectado')
       }
 
@@ -225,6 +230,12 @@ export function TimeEntry() {
                 audio={false}
                 screenshotFormat="image/jpeg"
                 className="absolute inset-0 h-full w-full object-cover"
+                mirrored
+                videoConstraints={{
+                  width: 224,
+                  height: 224,
+                  facingMode: "user"
+                }}
               />
 
               {/* Loading Overlay */}
