@@ -36,26 +36,75 @@ export function SignIn() {
 
   useEffect(() => {
     async function loadProjects() {
+      if (userType !== 'EMPLOYEE') return // Só carrega se for funcionário
+      
       try {
-        console.log('Iniciando carregamento dos projetos...')
-        const response = await api.get('/projects/active')
-        console.log('Resposta da API:', response.data)
+        setIsLoading(true)
+        setError('') // Limpa erro anterior
         
-        if (!response.data || response.data.length === 0) {
+        console.log('Iniciando carregamento dos projetos...')
+        console.log('URL da API:', api.defaults.baseURL)
+        
+        const baseResponse = await api.get('/projects/active')
+        console.log('Status da resposta:', baseResponse.status)
+        console.log('Dados da resposta:', baseResponse.data)
+        
+        if (!baseResponse.data) {
+          throw new Error('Resposta vazia do servidor')
+        }
+
+        const projectsData = Array.isArray(baseResponse.data) ? baseResponse.data : []
+        
+        if (projectsData.length === 0) {
           console.log('Nenhum projeto ativo encontrado')
-          toast.error('Nenhuma obra ativa encontrada')
+          setError('Nenhuma obra ativa encontrada')
           return
         }
+
+        const validProjects = projectsData.filter(project => 
+          project && 
+          project.id && 
+          project.name && 
+          typeof project.id === 'string' && 
+          typeof project.name === 'string'
+        )
+
+        console.log('Projetos válidos:', validProjects)
         
-        setProjects(response.data)
+        if (validProjects.length === 0) {
+          setError('Nenhuma obra válida encontrada')
+          return
+        }
+
+        setProjects(validProjects)
+        setError('') // Limpa erro se tudo deu certo
       } catch (error: any) {
-        console.error('Erro ao carregar projetos:', error)
-        toast.error(error.response?.data?.error || 'Erro ao carregar obras')
+        console.error('Erro detalhado ao carregar projetos:', {
+          message: error.message,
+          code: error.code,
+          response: error.response
+        })
+        
+        let errorMessage = 'Não foi possível carregar as obras. '
+        
+        if (error.code === 'ERR_NETWORK') {
+          errorMessage += 'Verifique sua conexão com a internet.'
+        } else if (error.code === 'ECONNABORTED') {
+          errorMessage += 'O servidor demorou para responder.'
+        } else if (error.response?.data?.error) {
+          errorMessage += error.response.data.error
+        } else {
+          errorMessage += error.message
+        }
+        
+        setError(errorMessage)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     loadProjects()
-  }, [])
+  }, [userType])
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -245,23 +294,35 @@ export function SignIn() {
                     <label className="text-sm font-medium text-[--text-secondary]">
                       Obra
                     </label>
-                    <select
-                      value={projectId}
-                      onChange={e => setProjectId(e.target.value)}
-                      disabled={isLoading}
-                      className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
-                      style={{
-                        WebkitAppearance: 'menulist',
-                        MozAppearance: 'menulist'
-                      }}
-                    >
-                      <option value="">Selecione uma obra</option>
-                      {projects?.map(project => (
-                        <option key={project.id} value={project.id}>
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={projectId}
+                        onChange={e => setProjectId(e.target.value)}
+                        disabled={isLoading}
+                        className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Selecione uma obra</option>
+                        {projects && projects.length > 0 ? (
+                          projects.map(project => (
+                            <option key={project.id} value={project.id}>
+                              {project.name}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            {isLoading ? 'Carregando obras...' : error || 'Nenhuma obra disponível'}
+                          </option>
+                        )}
+                      </select>
+                      {isLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                        </div>
+                      )}
+                    </div>
+                    {error && (
+                      <p className="text-sm text-red-500">{error}</p>
+                    )}
                   </div>
                 </>
               )}
