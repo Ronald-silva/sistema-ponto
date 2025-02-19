@@ -44,61 +44,112 @@ export class ProjectController {
   }
 
   async create(request: Request, response: Response) {
-    const { name, description, startDate, endDate, active = true } = request.body
-
     try {
+      const { name, description, active, overtimeRules } = request.body
+
       const project = await prisma.project.create({
         data: {
           name,
           description,
-          startDate,
-          endDate,
-          active
+          active,
+          overtimeRules: {
+            create: overtimeRules
+          }
+        },
+        include: {
+          overtimeRules: true
         }
       })
 
       return response.status(201).json(project)
     } catch (error) {
-      console.error('Erro ao criar projeto:', error)
-      return response.status(500).json({ error: 'Erro interno do servidor' })
+      console.error(error)
+      return response.status(500).json({ error: 'Erro ao criar projeto' })
     }
   }
 
   async update(request: Request, response: Response) {
-    const { id } = request.params
-    const { name, description, startDate, endDate, active } = request.body
-
     try {
+      const { id } = request.params
+      const { name, description, active, overtimeRules } = request.body
+
+      // Primeiro deletamos todas as regras existentes
+      await prisma.overtimeRule.deleteMany({
+        where: { projectId: id }
+      })
+
+      // Depois atualizamos o projeto com as novas regras
       const project = await prisma.project.update({
         where: { id },
         data: {
           name,
           description,
-          startDate,
-          endDate,
-          active
+          active,
+          overtimeRules: {
+            create: overtimeRules
+          }
+        },
+        include: {
+          overtimeRules: true
         }
       })
 
       return response.json(project)
     } catch (error) {
-      console.error('Erro ao atualizar projeto:', error)
-      return response.status(500).json({ error: 'Erro interno do servidor' })
+      console.error(error)
+      return response.status(500).json({ error: 'Erro ao atualizar projeto' })
+    }
+  }
+
+  async findById(request: Request, response: Response) {
+    try {
+      const { id } = request.params
+
+      const project = await prisma.project.findUnique({
+        where: { id },
+        include: {
+          overtimeRules: true
+        }
+      })
+
+      if (!project) {
+        return response.status(404).json({ error: 'Projeto não encontrado' })
+      }
+
+      return response.json(project)
+    } catch (error) {
+      console.error(error)
+      return response.status(500).json({ error: 'Erro ao buscar projeto' })
+    }
+  }
+
+  async list(request: Request, response: Response) {
+    try {
+      const projects = await prisma.project.findMany({
+        include: {
+          overtimeRules: true
+        }
+      })
+
+      return response.json(projects)
+    } catch (error) {
+      console.error(error)
+      return response.status(500).json({ error: 'Erro ao listar projetos' })
     }
   }
 
   async delete(request: Request, response: Response) {
-    const { id } = request.params
-
     try {
+      const { id } = request.params
+
       await prisma.project.delete({
         where: { id }
       })
 
       return response.status(204).send()
     } catch (error) {
-      console.error('Erro ao excluir projeto:', error)
-      return response.status(500).json({ error: 'Erro interno do servidor' })
+      console.error(error)
+      return response.status(500).json({ error: 'Erro ao deletar projeto' })
     }
   }
 

@@ -3,6 +3,35 @@ import { AdminHeader } from '../components/AdminHeader'
 import { Modal } from '../components/Modal'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useProjects } from '../hooks/useProjects'
+import { toast } from 'sonner'
+
+interface OvertimeRule {
+  type: string
+  multiplier: number
+  description: string
+}
+
+interface Project {
+  id: string
+  name: string
+  description?: string
+  location: string
+  company: string
+  status: 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'CANCELLED'
+  category: string
+  start_date: string
+  estimated_end_date: string | null
+  overtimeRules: OvertimeRule[]
+  active: boolean
+}
+
+interface EditingProject extends Omit<Project, 'overtimeRules'> {
+  overtimeRules: {
+    normal: string
+    noturna: string
+    domingoFeriado: string
+  }
+}
 
 const statusOptions = [
   { value: 'ACTIVE', label: 'Em Andamento' },
@@ -29,34 +58,52 @@ const companyOptions = [
 ]
 
 export function Projects() {
-  const { projects, isLoading, createProject, updateProject, deleteProject } = useProjects()
+  const { projects, isLoading, createProject, updateProject } = useProjects()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingProject, setEditingProject] = useState<any>(null)
+  const [editingProject, setEditingProject] = useState<EditingProject | null>(null)
 
   // Só filtra se tiver dados e termo de busca
   const filteredProjects = projects && searchTerm
     ? projects.filter(project =>
         project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.location?.toLowerCase().includes(searchTerm.toLowerCase())
+        project.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : projects
 
-  function handleOpenModal(project?: any) {
+  function handleOpenModal(project?: Project) {
     if (project) {
+      // Ao editar, converte as regras de hora extra para o formato do formulário
+      const normalRule = project.overtimeRules.find(rule => rule.type === 'WEEKDAY')
+      const noturnaRule = project.overtimeRules.find(rule => rule.type === 'NIGHT_SHIFT')
+      const domingoFeriadoRule = project.overtimeRules.find(rule => rule.type === 'SUNDAY_HOLIDAY')
+
       setEditingProject({
         ...project,
-        estimated_end_date: project.estimated_end_date?.split('T')[0]
+        estimated_end_date: project.estimated_end_date?.split('T')[0] || '',
+        overtimeRules: {
+          normal: normalRule?.multiplier.toString() || '50',
+          noturna: noturnaRule?.multiplier.toString() || '70',
+          domingoFeriado: domingoFeriadoRule?.multiplier.toString() || '100'
+        }
       })
     } else {
       setEditingProject({
+        id: '',
         name: '',
+        description: '',
         location: '',
+        company: '',
         start_date: new Date().toISOString().split('T')[0],
         estimated_end_date: '',
         status: 'ACTIVE',
         category: 'CONSTRUCTION',
-        company: ''
+        active: true,
+        overtimeRules: {
+          normal: '50', // Valor padrão para hora extra normal
+          noturna: '70', // Valor padrão para hora extra noturna
+          domingoFeriado: '100' // Valor padrão para hora extra domingo/feriado
+        }
       })
     }
     setIsModalOpen(true)
@@ -72,33 +119,60 @@ export function Projects() {
     if (!editingProject) return
 
     try {
+      // Converte as regras de hora extra para o formato esperado pelo backend
+      const projectData = {
+        ...editingProject,
+        overtimeRules: [
+          {
+            type: 'WEEKDAY',
+            multiplier: Number(editingProject.overtimeRules.normal),
+            description: 'Hora Extra Normal (Dias Úteis)'
+          },
+          {
+            type: 'NIGHT_SHIFT',
+            multiplier: Number(editingProject.overtimeRules.noturna),
+            description: 'Hora Extra Noturna'
+          },
+          {
+            type: 'SUNDAY_HOLIDAY',
+            multiplier: Number(editingProject.overtimeRules.domingoFeriado),
+            description: 'Hora Extra Domingo/Feriado'
+          }
+        ]
+      }
+
       if (editingProject.id) {
-        await updateProject.mutateAsync(editingProject)
+        await updateProject.mutateAsync(projectData as any)
+        toast.success('Obra atualizada com sucesso')
       } else {
-        await createProject.mutateAsync(editingProject)
+        await createProject.mutateAsync(projectData as any)
+        toast.success('Obra criada com sucesso')
       }
       handleCloseModal()
     } catch (error) {
-      if (error instanceof Error) {
-        alert(error.message)
-      }
+      console.error('Erro ao salvar projeto:', error)
+      toast.error('Erro ao salvar projeto')
     }
   }
 
   async function handleDelete(id: string) {
     if (confirm('Tem certeza que deseja excluir esta obra?')) {
       try {
-        await deleteProject.mutateAsync(id)
+        await updateProject.mutateAsync({
+          id,
+          active: false
+        } as any)
+        toast.success('Obra excluída com sucesso')
       } catch (error) {
-        if (error instanceof Error) {
-          alert(error.message)
-        }
+        console.error('Erro ao excluir obra:', error)
+        toast.error('Erro ao excluir obra')
       }
     }
   }
 
-  function formatDate(date: string) {
-    return date ? new Date(date).toLocaleDateString('pt-BR') : '-'
+  function formatDate(date: string | null) {
+    if (!date) return '-'
+    return new Date(date).toLocaleDateString('pt-BR')
   }
 
   return (
@@ -122,7 +196,7 @@ export function Projects() {
           <div className="mb-6">
             <input
               type="text"
-              placeholder="Buscar por nome ou localização..."
+              placeholder="Buscar por nome ou descrição..."
               className="input w-full"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -190,12 +264,14 @@ export function Projects() {
                             <button
                               onClick={() => handleOpenModal(project)}
                               className="rounded p-1 text-gray-400 hover:bg-gray-50 hover:text-gray-500"
+                              title="Editar obra"
                             >
                               <PencilIcon className="h-5 w-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(project.id)}
                               className="rounded p-1 text-gray-400 hover:bg-gray-50 hover:text-red-500"
+                              title="Excluir obra"
                             >
                               <TrashIcon className="h-5 w-5" />
                             </button>
@@ -279,7 +355,7 @@ export function Projects() {
                       required
                       className="input mt-1 w-full"
                       value={editingProject?.status || ''}
-                      onChange={e => setEditingProject(prev => prev ? { ...prev, status: e.target.value } : null)}
+                      onChange={e => setEditingProject(prev => prev ? { ...prev, status: e.target.value as Project['status'] } : null)}
                     >
                       <option value="">Selecione um status</option>
                       {statusOptions.map(status => (
@@ -333,13 +409,97 @@ export function Projects() {
                     <input
                       type="date"
                       id="estimated_end_date"
-                      required
                       className="input mt-1 w-full"
                       value={editingProject?.estimated_end_date || ''}
                       onChange={e => setEditingProject(prev => prev ? { ...prev, estimated_end_date: e.target.value } : null)}
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Regras de Hora Extra */}
+              <div className="border-t border-[--border] pt-6">
+                <h3 className="mb-2 text-lg font-medium text-gray-700">Regras de Hora Extra</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Hora Extra Normal (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Ex: 50"
+                      className="input w-full"
+                      value={editingProject?.overtimeRules.normal || ''}
+                      onChange={e =>
+                        setEditingProject(prev =>
+                          prev ? { 
+                            ...prev, 
+                            overtimeRules: { 
+                              ...prev.overtimeRules, 
+                              normal: e.target.value 
+                            } 
+                          } : null
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Hora Extra Noturna (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Ex: 70"
+                      className="input w-full"
+                      value={editingProject?.overtimeRules.noturna || ''}
+                      onChange={e =>
+                        setEditingProject(prev =>
+                          prev ? { 
+                            ...prev, 
+                            overtimeRules: { 
+                              ...prev.overtimeRules, 
+                              noturna: e.target.value 
+                            } 
+                          } : null
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Hora Extra Domingo/Feriado (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Ex: 100"
+                      className="input w-full"
+                      value={editingProject?.overtimeRules.domingoFeriado || ''}
+                      onChange={e =>
+                        setEditingProject(prev =>
+                          prev ? { 
+                            ...prev, 
+                            overtimeRules: { 
+                              ...prev.overtimeRules, 
+                              domingoFeriado: e.target.value 
+                            } 
+                          } : null
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  * Os valores representam a porcentagem adicional sobre o valor da hora normal
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">

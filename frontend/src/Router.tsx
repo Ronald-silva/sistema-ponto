@@ -3,6 +3,7 @@ import { SignIn } from './pages/SignIn'
 import { Dashboard } from './pages/Dashboard'
 import { TimeRecord } from './pages/TimeRecord'
 import { Projects } from './pages/Projects'
+import { ProjectForm } from './pages/ProjectForm'
 import { Employees } from './pages/Employees'
 import { useAuth } from './contexts/AuthContext'
 
@@ -88,6 +89,24 @@ export function Router() {
         element={
           <PrivateRoute allowedRoles={['ADMIN']}>
             <Projects />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/projects/new"
+        element={
+          <PrivateRoute allowedRoles={['ADMIN']}>
+            <ProjectForm />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:id/edit"
+        element={
+          <PrivateRoute allowedRoles={['ADMIN']}>
+            <ProjectForm />
           </PrivateRoute>
         }
       />
