@@ -194,18 +194,31 @@ export class ProjectController {
 
   async active(request: Request, response: Response) {
     try {
+      console.log('Buscando projetos ativos...')
+      
       const projects = await prisma.project.findMany({
         where: {
-          active: true
+          AND: [
+            { active: true },
+            { status: 'ACTIVE' }
+          ]
         },
         select: {
           id: true,
-          name: true
+          name: true,
+          company: true
         },
         orderBy: {
           name: 'asc'
         }
       })
+
+      console.log('Projetos ativos encontrados:', projects)
+
+      if (!projects.length) {
+        console.log('Nenhum projeto ativo encontrado')
+        return response.json([])
+      }
 
       return response.json(projects)
     } catch (error) {

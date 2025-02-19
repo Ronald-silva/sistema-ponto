@@ -40,9 +40,17 @@ export function SignIn() {
         console.log('Iniciando carregamento dos projetos...')
         const response = await api.get('/projects/active')
         console.log('Resposta da API:', response.data)
+        
+        if (!response.data || response.data.length === 0) {
+          console.log('Nenhum projeto ativo encontrado')
+          toast.error('Nenhuma obra ativa encontrada')
+          return
+        }
+        
         setProjects(response.data)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao carregar projetos:', error)
+        toast.error(error.response?.data?.error || 'Erro ao carregar obras')
       }
     }
 
@@ -219,6 +227,10 @@ export function SignIn() {
                       onChange={e => setCompanyId(e.target.value)}
                       disabled={isLoading}
                       className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{
+                        WebkitAppearance: 'menulist',
+                        MozAppearance: 'menulist'
+                      }}
                     >
                       <option value="">Selecione uma empresa</option>
                       {companies.map(company => (
@@ -238,9 +250,13 @@ export function SignIn() {
                       onChange={e => setProjectId(e.target.value)}
                       disabled={isLoading}
                       className="h-11 w-full rounded-lg border border-[--border] bg-white px-3 text-base text-[--text] shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-25 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{
+                        WebkitAppearance: 'menulist',
+                        MozAppearance: 'menulist'
+                      }}
                     >
                       <option value="">Selecione uma obra</option>
-                      {projects.map(project => (
+                      {projects?.map(project => (
                         <option key={project.id} value={project.id}>
                           {project.name}
                         </option>
