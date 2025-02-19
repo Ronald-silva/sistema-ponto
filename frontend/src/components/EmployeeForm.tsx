@@ -6,6 +6,7 @@ import { Modal } from './Modal'
 import { toast } from 'sonner'
 import { formatCPF } from '../utils/formatCPF'
 import { formatCurrency } from '../utils/formatCurrency'
+import { useEffect } from 'react'
 
 const roleOptions = {
   'ALMOXARIFE A': 'Almoxarife A',
@@ -63,11 +64,13 @@ const roleOptions = {
   'VIGIA': 'Vigia'
 }
 
+type Role = keyof typeof roleOptions
+
 const employeeFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
   role: z.string().min(1, 'O cargo é obrigatório').refine(
-    (value) => Object.keys(roleOptions).includes(value),
+    (value): value is Role => Object.keys(roleOptions).includes(value),
     'Cargo inválido'
   ),
   salary: z.string(),
@@ -81,7 +84,16 @@ type EmployeeFormData = z.infer<typeof employeeFormSchema>
 interface EmployeeFormProps {
   isOpen: boolean
   onClose: () => void
-  defaultValues?: EmployeeFormData & { id: string }
+  defaultValues?: {
+    id: string
+    name: string
+    cpf: string
+    role: Role
+    salary: number
+    birth_date: string
+    admission_date: string
+    active: boolean
+  }
 }
 
 export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormProps) {
@@ -92,20 +104,49 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: defaultValues ? {
       ...defaultValues,
       birth_date: defaultValues.birth_date.split('T')[0],
       admission_date: defaultValues.admission_date.split('T')[0],
-      salary: formatCurrency(Number(defaultValues.salary))
+      salary: formatCurrency(Number(defaultValues.salary)),
+      cpf: formatCPF(defaultValues.cpf)
     } : {
       active: true,
-      role: '',
-      salary: 'R$ 0,00'
+      role: Object.keys(roleOptions)[0] as Role,
+      salary: 'R$ 0,00',
+      name: '',
+      cpf: '',
+      birth_date: '',
+      admission_date: ''
     }
   })
+
+  // Reseta o formulário quando os defaultValues mudarem
+  useEffect(() => {
+    if (defaultValues) {
+      reset({
+        ...defaultValues,
+        birth_date: defaultValues.birth_date.split('T')[0],
+        admission_date: defaultValues.admission_date.split('T')[0],
+        salary: formatCurrency(Number(defaultValues.salary)),
+        cpf: formatCPF(defaultValues.cpf)
+      })
+    } else {
+      reset({
+        active: true,
+        role: Object.keys(roleOptions)[0] as Role,
+        salary: 'R$ 0,00',
+        name: '',
+        cpf: '',
+        birth_date: '',
+        admission_date: ''
+      })
+    }
+  }, [defaultValues, reset])
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedCPF = formatCPF(e.target.value)

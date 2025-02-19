@@ -73,10 +73,12 @@ export function Projects() {
 
   function handleOpenModal(project?: Project) {
     if (project) {
+      console.log('Projeto para edição:', project) // Log para debug
+      
       // Ao editar, converte as regras de hora extra para o formato do formulário
-      const normalRule = project.overtimeRules.find(rule => rule.type === 'WEEKDAY')
-      const noturnaRule = project.overtimeRules.find(rule => rule.type === 'NIGHT_SHIFT')
-      const domingoFeriadoRule = project.overtimeRules.find(rule => rule.type === 'SUNDAY_HOLIDAY')
+      const normalRule = project.overtimeRules?.find(rule => rule.type === 'WEEKDAY')
+      const noturnaRule = project.overtimeRules?.find(rule => rule.type === 'NIGHT_SHIFT')
+      const domingoFeriadoRule = project.overtimeRules?.find(rule => rule.type === 'SUNDAY_HOLIDAY')
 
       setEditingProject({
         ...project,
