@@ -1,11 +1,12 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useEmployees } from '../hooks/useEmployees'
+import { useEmployees, Role } from '../hooks/useEmployees'
 import { Modal } from './Modal'
 import { toast } from 'sonner'
 import { formatCPF } from '../utils/formatCPF'
 import { formatCurrency } from '../utils/formatCurrency'
+import { useEffect } from 'react'
 
 const roleOptions = {
   'ALMOXARIFE A': 'Almoxarife A',
@@ -66,22 +67,36 @@ const roleOptions = {
 const employeeFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
-  role: z.string().min(1, 'O cargo é obrigatório').refine(
-    (value) => Object.keys(roleOptions).includes(value),
-    'Cargo inválido'
-  ),
+  role: z.custom<Role>((val) => Object.keys(roleOptions).includes(val as string), 'Cargo inválido'),
   salary: z.string(),
   birth_date: z.string().min(1, 'A data de nascimento é obrigatória'),
   admission_date: z.string().min(1, 'A data de admissão é obrigatória'),
   active: z.boolean().default(true)
 })
 
-type EmployeeFormData = z.infer<typeof employeeFormSchema>
+interface EmployeeFormData {
+  name: string
+  cpf: string
+  role: Role
+  salary: string
+  birth_date: string
+  admission_date: string
+  active: boolean
+}
 
 interface EmployeeFormProps {
   isOpen: boolean
   onClose: () => void
-  defaultValues?: EmployeeFormData & { id: string }
+  defaultValues?: {
+    id: string
+    name: string
+    cpf: string
+    role: Role
+    salary?: number
+    birth_date?: string
+    admission_date?: string
+    active: boolean
+  }
 }
 
 export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormProps) {
@@ -92,20 +107,49 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: defaultValues ? {
       ...defaultValues,
-      birth_date: defaultValues.birth_date.split('T')[0],
-      admission_date: defaultValues.admission_date.split('T')[0],
-      salary: formatCurrency(Number(defaultValues.salary))
+      birth_date: defaultValues.birth_date?.split('T')[0] || '',
+      admission_date: defaultValues.admission_date?.split('T')[0] || '',
+      salary: formatCurrency(Number(defaultValues.salary || 0)),
+      cpf: formatCPF(defaultValues.cpf)
     } : {
-      active: true,
-      role: '',
-      salary: 'R$ 0,00'
+      name: '',
+      cpf: '',
+      role: 'ADMIN' as Role,
+      salary: 'R$ 0,00',
+      birth_date: '',
+      admission_date: '',
+      active: true
     }
   })
+
+  // Reseta o formulário quando os defaultValues mudam
+  useEffect(() => {
+    if (defaultValues) {
+      reset({
+        ...defaultValues,
+        birth_date: defaultValues.birth_date?.split('T')[0] || '',
+        admission_date: defaultValues.admission_date?.split('T')[0] || '',
+        salary: formatCurrency(Number(defaultValues.salary || 0)),
+        cpf: formatCPF(defaultValues.cpf)
+      })
+    } else {
+      reset({
+        name: '',
+        cpf: '',
+        role: 'ADMIN' as Role,
+        salary: 'R$ 0,00',
+        birth_date: '',
+        admission_date: '',
+        active: true
+      })
+    }
+  }, [defaultValues, reset])
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedCPF = formatCPF(e.target.value)
@@ -146,7 +190,7 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
       onClose()
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao cadastrar funcionário')
+      toast.error('Erro ao salvar funcionário')
     }
   }
 

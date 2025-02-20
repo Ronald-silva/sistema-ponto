@@ -14,18 +14,27 @@ interface OvertimeRule {
 interface Project {
   id: string
   name: string
-  description?: string
   location: string
-  company: string
-  status: 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'CANCELLED'
-  category: string
   start_date: string
   estimated_end_date: string | null
-  overtimeRules: OvertimeRule[]
+  status: 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'CANCELLED'
+  category: string
+  company: string
   active: boolean
+  created_at?: string
+  updated_at?: string
 }
 
-interface EditingProject extends Omit<Project, 'overtimeRules'> {
+interface EditingProject {
+  id: string
+  name: string
+  location: string
+  start_date: string
+  estimated_end_date: string | null
+  status: 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'CANCELLED'
+  category: string
+  company: string
+  active: boolean
   overtimeRules: {
     normal: string
     noturna: string
@@ -67,42 +76,43 @@ export function Projects() {
   const filteredProjects = projects && searchTerm
     ? projects.filter(project =>
         project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        project.location?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : projects
 
   function handleOpenModal(project?: Project) {
     if (project) {
-      // Ao editar, converte as regras de hora extra para o formato do formulário
-      const normalRule = project.overtimeRules.find(rule => rule.type === 'WEEKDAY')
-      const noturnaRule = project.overtimeRules.find(rule => rule.type === 'NIGHT_SHIFT')
-      const domingoFeriadoRule = project.overtimeRules.find(rule => rule.type === 'SUNDAY_HOLIDAY')
-
       setEditingProject({
-        ...project,
+        id: project.id,
+        name: project.name,
+        location: project.location,
+        start_date: project.start_date?.split('T')[0] || new Date().toISOString().split('T')[0],
         estimated_end_date: project.estimated_end_date?.split('T')[0] || '',
+        status: project.status,
+        category: project.category,
+        company: project.company,
+        active: project.active,
         overtimeRules: {
-          normal: normalRule?.multiplier.toString() || '50',
-          noturna: noturnaRule?.multiplier.toString() || '70',
-          domingoFeriado: domingoFeriadoRule?.multiplier.toString() || '100'
+          normal: '50',
+          noturna: '70',
+          domingoFeriado: '100'
         }
       })
     } else {
       setEditingProject({
         id: '',
         name: '',
-        description: '',
         location: '',
-        company: '',
         start_date: new Date().toISOString().split('T')[0],
         estimated_end_date: '',
         status: 'ACTIVE',
         category: 'CONSTRUCTION',
+        company: '',
         active: true,
         overtimeRules: {
-          normal: '50', // Valor padrão para hora extra normal
-          noturna: '70', // Valor padrão para hora extra noturna
-          domingoFeriado: '100' // Valor padrão para hora extra domingo/feriado
+          normal: '50',
+          noturna: '70',
+          domingoFeriado: '100'
         }
       })
     }
@@ -196,7 +206,7 @@ export function Projects() {
           <div className="mb-6">
             <input
               type="text"
-              placeholder="Buscar por nome ou descrição..."
+              placeholder="Buscar por nome ou localização..."
               className="input w-full"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
