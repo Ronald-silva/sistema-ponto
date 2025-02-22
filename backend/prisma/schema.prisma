@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String        @id @default(uuid())
+  name      String
+  cpf       String        @unique
+  role      UserRole      @default(EMPLOYEE)
+  faceId    String?       @unique
+  active    Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  projects  UserProject[]
+
+  @@map("users")
+}
+
+model Project {
+  id            String         @id @default(uuid())
+  name          String
+  description   String?
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  overtimeRules OvertimeRule[]
+  users         UserProject[]
+
+  @@map("projects")
+}
+
+model OvertimeRule {
+  id          String   @id @default(uuid())
+  type        String
+  multiplier  Float
+  description String
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("overtime_rules")
+}
+
+model UserProject {
+  userId     String
+  projectId  String
+  assignedBy String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  project    Project  @relation(fields: [projectId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, projectId])
+  @@map("user_projects")
+}
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
