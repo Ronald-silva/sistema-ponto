@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.routes = void 0;
+const express_1 = require("express");
+const auth_routes_1 = require("./auth.routes");
+const project_routes_1 = require("./project.routes");
+const timeRecord_routes_1 = require("./timeRecord.routes");
+const auth_1 = require("../middlewares/auth");
+const routes = (0, express_1.Router)();
+exports.routes = routes;
+routes.use('/auth', auth_routes_1.authRoutes);
+routes.use('/projects', auth_1.ensureAuthenticated, project_routes_1.projectRoutes);
+routes.use('/time-records', auth_1.ensureAuthenticated, timeRecord_routes_1.timeRecordRoutes);

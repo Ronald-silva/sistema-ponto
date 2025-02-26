@@ -7,17 +7,37 @@ import { useDateTime } from '../hooks/useDateTime'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
+interface Employee {
+  id: string
+  name: string
+  cpf: string
+  role: string
+  salary: number
+  birth_date: string
+  admission_date: string
+  active: boolean
+}
+
 export function Employees() {
   const { employees, isLoading, deleteEmployee } = useEmployees()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const { time, date } = useDateTime()
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
 
-  function handleOpenForm(employee?: any) {
-    setSelectedEmployee(employee || null)
+  function handleOpenForm(employee?: Employee) {
+    if (employee) {
+      // Garantir que as datas estejam no formato correto para o formulário
+      setSelectedEmployee({
+        ...employee,
+        birth_date: employee.birth_date.split('T')[0],
+        admission_date: employee.admission_date.split('T')[0],
+      })
+    } else {
+      setSelectedEmployee(null)
+    }
     setIsFormOpen(true)
   }
 

@@ -1,0 +1,34 @@
+services:
+  # Serviço Backend
+  - type: web
+    name: controle-hora-extra-api
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3333
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://controle-hora-extra.onrender.com
+
+  # Serviço Frontend
+  - type: web
+    name: controle-hora-extra
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://controle-hora-extra-api.onrender.com
+      - key: PORT
+        value: 4173 

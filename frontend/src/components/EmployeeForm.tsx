@@ -6,6 +6,7 @@ import { Modal } from './Modal'
 import { toast } from 'sonner'
 import { formatCPF } from '../utils/formatCPF'
 import { formatCurrency } from '../utils/formatCurrency'
+import { useEffect } from 'react'
 
 const roleOptions = {
   'ALMOXARIFE A': 'Almoxarife A',
@@ -65,14 +66,32 @@ const roleOptions = {
 
 const employeeFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
-  cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
-  role: z.string().min(1, 'O cargo é obrigatório').refine(
-    (value) => Object.keys(roleOptions).includes(value),
-    'Cargo inválido'
-  ),
-  salary: z.string(),
-  birth_date: z.string().min(1, 'A data de nascimento é obrigatória'),
-  admission_date: z.string().min(1, 'A data de admissão é obrigatória'),
+  cpf: z.string()
+    .min(11, 'CPF inválido')
+    .max(14, 'CPF inválido')
+    .transform(val => val.replace(/\D/g, ''))
+    .refine(val => val.length === 11, 'CPF deve ter 11 dígitos'),
+  role: z.string()
+    .min(1, 'O cargo é obrigatório')
+    .refine(
+      (value) => Object.keys(roleOptions).includes(value),
+      'Cargo inválido'
+    ),
+  salary: z.string()
+    .min(1, 'O salário é obrigatório')
+    .transform(val => val.replace(/\D/g, '')),
+  birth_date: z.string()
+    .min(1, 'A data de nascimento é obrigatória')
+    .refine(val => {
+      const date = new Date(val)
+      return !isNaN(date.getTime())
+    }, 'Data de nascimento inválida'),
+  admission_date: z.string()
+    .min(1, 'A data de admissão é obrigatória')
+    .refine(val => {
+      const date = new Date(val)
+      return !isNaN(date.getTime())
+    }, 'Data de admissão inválida'),
   active: z.boolean().default(true)
 })
 
@@ -92,7 +111,8 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: defaultValues ? {
@@ -101,11 +121,37 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
       admission_date: defaultValues.admission_date.split('T')[0],
       salary: formatCurrency(Number(defaultValues.salary))
     } : {
-      active: true,
+      name: '',
+      cpf: '',
       role: '',
-      salary: 'R$ 0,00'
+      salary: 'R$ 0,00',
+      birth_date: new Date().toISOString().split('T')[0],
+      admission_date: new Date().toISOString().split('T')[0],
+      active: true
     }
   })
+
+  // Resetar o formulário quando os defaultValues mudarem ou quando o modal fechar
+  useEffect(() => {
+    if (defaultValues) {
+      reset({
+        ...defaultValues,
+        birth_date: defaultValues.birth_date.split('T')[0],
+        admission_date: defaultValues.admission_date.split('T')[0],
+        salary: formatCurrency(Number(defaultValues.salary))
+      })
+    } else {
+      reset({
+        name: '',
+        cpf: '',
+        role: '',
+        salary: 'R$ 0,00',
+        birth_date: new Date().toISOString().split('T')[0],
+        admission_date: new Date().toISOString().split('T')[0],
+        active: true
+      })
+    }
+  }, [defaultValues, reset, isOpen])
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedCPF = formatCPF(e.target.value)
@@ -124,29 +170,41 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
 
   async function handleCreateEmployee(data: EmployeeFormData) {
     try {
-      const numericSalary = Number(data.salary.replace(/\D/g, '')) / 100
-
+      // Formata os dados antes de enviar
       const formattedData = {
         ...data,
-        cpf: data.cpf.replace(/\D/g, ''),
-        salary: numericSalary,
+        cpf: data.cpf.replace(/\D/g, ''), // Remove caracteres não numéricos do CPF
+        salary: Number(data.salary.replace(/\D/g, '')) / 100, // Converte salário para número
+        birth_date: new Date(data.birth_date).toISOString().split('T')[0], // Formata data de nascimento
+        admission_date: new Date(data.admission_date).toISOString().split('T')[0], // Formata data de admissão
+        active: data.active ?? true // Garante que active tenha um valor padrão
       }
 
       if (defaultValues?.id) {
+        // Atualização de funcionário existente
         await updateEmployee.mutateAsync({
           id: defaultValues.id,
           ...formattedData
         })
         toast.success('Funcionário atualizado com sucesso!')
       } else {
+        // Criação de novo funcionário
         await createEmployee.mutateAsync(formattedData)
         toast.success('Funcionário cadastrado com sucesso!')
       }
 
+      // Fecha o modal apenas se a operação foi bem sucedida
       onClose()
-    } catch (error) {
-      console.error(error)
-      toast.error('Erro ao cadastrar funcionário')
+      
+    } catch (error: any) {
+      console.error('Erro ao salvar funcionário:', error)
+      
+      // Tratamento específico para erro de CPF duplicado
+      if (error?.message?.includes('CPF')) {
+        toast.error('Já existe um funcionário cadastrado com este CPF')
+      } else {
+        toast.error('Erro ao salvar funcionário. Por favor, tente novamente.')
+      }
     }
   }
 

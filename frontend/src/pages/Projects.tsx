@@ -73,22 +73,38 @@ export function Projects() {
 
   function handleOpenModal(project?: Project) {
     if (project) {
-      // Ao editar, converte as regras de hora extra para o formato do formulário
-      const normalRule = project.overtimeRules.find(rule => rule.type === 'WEEKDAY')
-      const noturnaRule = project.overtimeRules.find(rule => rule.type === 'NIGHT_SHIFT')
-      const domingoFeriadoRule = project.overtimeRules.find(rule => rule.type === 'SUNDAY_HOLIDAY')
-
-      setEditingProject({
-        ...project,
-        estimated_end_date: project.estimated_end_date?.split('T')[0] || '',
-        overtimeRules: {
-          normal: normalRule?.multiplier.toString() || '50',
-          noturna: noturnaRule?.multiplier.toString() || '70',
-          domingoFeriado: domingoFeriadoRule?.multiplier.toString() || '100'
+      try {
+        // Garantir que overtimeRules existe e tem os valores necessários
+        const overtimeRules = project.overtimeRules || []
+        
+        const formattedProject: EditingProject = {
+          id: project.id,
+          name: project.name || '',
+          description: project.description || '',
+          location: project.location || '',
+          company: project.company || '',
+          start_date: project.start_date ? project.start_date.split('T')[0] : new Date().toISOString().split('T')[0],
+          estimated_end_date: project.estimated_end_date ? project.estimated_end_date.split('T')[0] : '',
+          status: project.status || 'ACTIVE',
+          category: project.category || 'CONSTRUCTION',
+          active: project.active,
+          overtimeRules: {
+            normal: overtimeRules.find(rule => rule.type === 'WEEKDAY')?.multiplier.toString() || '50',
+            noturna: overtimeRules.find(rule => rule.type === 'NIGHT_SHIFT')?.multiplier.toString() || '70',
+            domingoFeriado: overtimeRules.find(rule => rule.type === 'SUNDAY_HOLIDAY')?.multiplier.toString() || '100'
+          }
         }
-      })
+
+        console.log('Projeto formatado para edição:', formattedProject)
+        setEditingProject(formattedProject)
+        setIsModalOpen(true)
+      } catch (error) {
+        console.error('Erro ao carregar projeto para edição:', error)
+        toast.error('Erro ao carregar projeto para edição')
+      }
     } else {
-      setEditingProject({
+      // Projeto novo
+      const newProject: EditingProject = {
         id: '',
         name: '',
         description: '',
@@ -100,13 +116,14 @@ export function Projects() {
         category: 'CONSTRUCTION',
         active: true,
         overtimeRules: {
-          normal: '50', // Valor padrão para hora extra normal
-          noturna: '70', // Valor padrão para hora extra noturna
-          domingoFeriado: '100' // Valor padrão para hora extra domingo/feriado
+          normal: '50',
+          noturna: '70',
+          domingoFeriado: '100'
         }
-      })
+      }
+      setEditingProject(newProject)
+      setIsModalOpen(true)
     }
-    setIsModalOpen(true)
   }
 
   function handleCloseModal() {
@@ -303,7 +320,7 @@ export function Projects() {
                     id="name"
                     required
                     className="input mt-1 w-full"
-                    value={editingProject?.name || ''}
+                    value={editingProject?.name ?? ''}
                     onChange={e => setEditingProject(prev => prev ? { ...prev, name: e.target.value } : null)}
                   />
                 </div>
@@ -316,7 +333,7 @@ export function Projects() {
                     id="company"
                     required
                     className="input mt-1 w-full"
-                    value={editingProject?.company || ''}
+                    value={editingProject?.company ?? ''}
                     onChange={e => setEditingProject(prev => prev ? { ...prev, company: e.target.value } : null)}
                   >
                     <option value="">Selecione uma empresa</option>
@@ -337,7 +354,7 @@ export function Projects() {
                     id="location"
                     required
                     className="input mt-1 w-full"
-                    value={editingProject?.location || ''}
+                    value={editingProject?.location ?? ''}
                     onChange={e => setEditingProject(prev => prev ? { ...prev, location: e.target.value } : null)}
                   />
                 </div>
@@ -354,7 +371,7 @@ export function Projects() {
                       id="status"
                       required
                       className="input mt-1 w-full"
-                      value={editingProject?.status || ''}
+                      value={editingProject?.status ?? ''}
                       onChange={e => setEditingProject(prev => prev ? { ...prev, status: e.target.value as Project['status'] } : null)}
                     >
                       <option value="">Selecione um status</option>
@@ -374,7 +391,7 @@ export function Projects() {
                       id="category"
                       required
                       className="input mt-1 w-full"
-                      value={editingProject?.category || ''}
+                      value={editingProject?.category ?? ''}
                       onChange={e => setEditingProject(prev => prev ? { ...prev, category: e.target.value } : null)}
                     >
                       <option value="">Selecione uma categoria</option>
@@ -397,7 +414,7 @@ export function Projects() {
                       id="start_date"
                       required
                       className="input mt-1 w-full"
-                      value={editingProject?.start_date || ''}
+                      value={editingProject?.start_date ?? ''}
                       onChange={e => setEditingProject(prev => prev ? { ...prev, start_date: e.target.value } : null)}
                     />
                   </div>
@@ -410,7 +427,7 @@ export function Projects() {
                       type="date"
                       id="estimated_end_date"
                       className="input mt-1 w-full"
-                      value={editingProject?.estimated_end_date || ''}
+                      value={editingProject?.estimated_end_date ?? ''}
                       onChange={e => setEditingProject(prev => prev ? { ...prev, estimated_end_date: e.target.value } : null)}
                     />
                   </div>
@@ -431,7 +448,7 @@ export function Projects() {
                       max="100"
                       placeholder="Ex: 50"
                       className="input w-full"
-                      value={editingProject?.overtimeRules.normal || ''}
+                      value={editingProject?.overtimeRules?.normal ?? ''}
                       onChange={e =>
                         setEditingProject(prev =>
                           prev ? { 
@@ -456,7 +473,7 @@ export function Projects() {
                       max="100"
                       placeholder="Ex: 70"
                       className="input w-full"
-                      value={editingProject?.overtimeRules.noturna || ''}
+                      value={editingProject?.overtimeRules?.noturna ?? ''}
                       onChange={e =>
                         setEditingProject(prev =>
                           prev ? { 
@@ -481,7 +498,7 @@ export function Projects() {
                       max="100"
                       placeholder="Ex: 100"
                       className="input w-full"
-                      value={editingProject?.overtimeRules.domingoFeriado || ''}
+                      value={editingProject?.overtimeRules?.domingoFeriado ?? ''}
                       onChange={e =>
                         setEditingProject(prev =>
                           prev ? { 
