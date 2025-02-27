@@ -24,7 +24,7 @@ class OvertimeCalculator {
         const recordsByDay = this.groupRecordsByDay(timeRecords);
         for (const [dateStr, dayRecords] of Object.entries(recordsByDay)) {
             const date = new Date(dateStr);
-            const dayType = this.getDayType(date, dayRecords[0].project.holidays);
+            const dayType = this.getDayType(date);
             const { regularHours, overtimeHours } = this.calculateDayHours(dayRecords);
             result.totalRegularHours += regularHours;
             if (overtimeHours > 0) {
@@ -32,24 +32,24 @@ class OvertimeCalculator {
                 const regularOvertimeHours = overtimeHours - nightShiftHours;
                 if (nightShiftHours > 0) {
                     result.overtimeHours.nightShift += nightShiftHours;
-                    result.overtimeValues.nightShift += this.calculateOvertimeValue(nightShiftHours, baseHourlyRate, this.getMultiplier(dayRecords[0].project.overtimeRules, 'NIGHT_SHIFT'));
+                    result.overtimeValues.nightShift += this.calculateOvertimeValue(nightShiftHours, baseHourlyRate, 1.72);
                 }
                 switch (dayType) {
                     case 'weekday':
                         result.overtimeHours.weekday += regularOvertimeHours;
-                        result.overtimeValues.weekday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, this.getMultiplier(dayRecords[0].project.overtimeRules, 'WEEKDAY'));
+                        result.overtimeValues.weekday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, 1.6);
                         break;
                     case 'saturday':
                         result.overtimeHours.saturday += regularOvertimeHours;
-                        result.overtimeValues.saturday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, this.getMultiplier(dayRecords[0].project.overtimeRules, 'SATURDAY'));
+                        result.overtimeValues.saturday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, 1.67);
                         break;
                     case 'sunday':
                         result.overtimeHours.sunday += regularOvertimeHours;
-                        result.overtimeValues.sunday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, this.getMultiplier(dayRecords[0].project.overtimeRules, 'SUNDAY'));
+                        result.overtimeValues.sunday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, 2.0);
                         break;
                     case 'holiday':
                         result.overtimeHours.holiday += regularOvertimeHours;
-                        result.overtimeValues.holiday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, this.getMultiplier(dayRecords[0].project.overtimeRules, 'HOLIDAY'));
+                        result.overtimeValues.holiday += this.calculateOvertimeValue(regularOvertimeHours, baseHourlyRate, 2.0);
                         break;
                 }
             }
@@ -73,14 +73,11 @@ class OvertimeCalculator {
         });
         return grouped;
     }
-    static getDayType(date, holidays) {
-        const isHoliday = holidays.some(holiday => holiday.date.toISOString().split('T')[0] === date.toISOString().split('T')[0]);
-        if (isHoliday)
-            return 'holiday';
-        const dayOfWeek = date.getDay();
-        if (dayOfWeek === 0)
+    static getDayType(date) {
+        const day = date.getDay();
+        if (day === 0)
             return 'sunday';
-        if (dayOfWeek === 6)
+        if (day === 6)
             return 'saturday';
         return 'weekday';
     }
@@ -131,10 +128,6 @@ class OvertimeCalculator {
             }
         }
         return nightShiftHours;
-    }
-    static getMultiplier(rules, type) {
-        const rule = rules.find(r => r.type === type);
-        return rule ? rule.multiplier : 1;
     }
     static calculateOvertimeValue(hours, baseHourlyRate, multiplier) {
         return hours * baseHourlyRate * multiplier;

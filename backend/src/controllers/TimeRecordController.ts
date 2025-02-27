@@ -1,15 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { OvertimeCalculator } from '../services/OvertimeCalculator';
-import { FaceRecognitionService } from '../services/FaceRecognitionService';
 
 export class TimeRecordController {
-  private faceRecognitionService: FaceRecognitionService;
-
-  constructor() {
-    this.faceRecognitionService = new FaceRecognitionService();
-  }
-
   async index(request: Request, response: Response) {
     const { userId, projectId, startDate, endDate } = request.query;
 
@@ -79,20 +72,15 @@ export class TimeRecordController {
 
   async create(request: Request, response: Response) {
     const { projectId, timestamp, type } = request.body;
-    const imageBuffer = request.file?.buffer;
-    const userId = request.user?.id; // Pegar userId do token JWT
+    const userId = request.user?.id;
 
     if (!userId) {
       return response.status(401).json({ error: 'Usuário não autenticado' });
     }
 
-    if (!imageBuffer) {
-      return response.status(400).json({ error: 'Imagem não fornecida' });
-    }
-
     try {
       // Verifica se o usuário está vinculado ao projeto
-      const userProject = await prisma.usersOnProjects.findUnique({
+      const userProject = await prisma.userProject.findUnique({
         where: {
           userId_projectId: {
             userId,
@@ -150,7 +138,7 @@ export class TimeRecordController {
 
   async update(request: Request, response: Response) {
     const { id } = request.params;
-    const { timestamp, type, validated } = request.body;
+    const { timestamp, type } = request.body;
 
     const timeRecord = await prisma.timeRecord.findUnique({
       where: { id },
@@ -165,7 +153,6 @@ export class TimeRecordController {
       data: {
         timestamp: timestamp ? new Date(timestamp) : undefined,
         type,
-        validated,
       },
       include: {
         user: {
@@ -238,7 +225,6 @@ export class TimeRecordController {
   async calculateOvertime(request: Request, response: Response) {
     const { userId, projectId, startDate, endDate } = request.body;
 
-    // Busca o usuário para obter o salário base
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { salary: true },
@@ -248,7 +234,6 @@ export class TimeRecordController {
       return response.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    // Calcula o valor da hora base (considerando 220 horas mensais)
     const baseHourlyRate = user.salary / 220;
 
     const timeRecords = await prisma.timeRecord.findMany({
@@ -258,19 +243,13 @@ export class TimeRecordController {
         timestamp: {
           gte: new Date(startDate),
           lte: new Date(endDate),
-        },
-        validated: true,
+        }
       },
       orderBy: {
         timestamp: 'asc',
       },
       include: {
-        project: {
-          include: {
-            overtimeRules: true,
-            holidays: true,
-          },
-        },
+        project: true
       },
     });
 

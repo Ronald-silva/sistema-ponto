@@ -1,17 +1,27 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { AuthController } from '../controllers/AuthController';
 
 const authRoutes = Router();
 const authController = new AuthController();
 
-// Rota de teste
-authRoutes.get('/test', (req, res) => {
-  res.json({ message: 'Test route working' });
-});
-
 // Rotas de autenticação
-authRoutes.post('/login', (req, res) => authController.login(req, res));
-authRoutes.post('/employee', (req, res) => authController.loginEmployee(req, res));
-authRoutes.post('/register', (req, res) => authController.register(req, res));
+const loginHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await authController.login(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const employeeLoginHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await authController.loginEmployee(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+authRoutes.post('/login', loginHandler);
+authRoutes.post('/employee', employeeLoginHandler);
 
 export { authRoutes };

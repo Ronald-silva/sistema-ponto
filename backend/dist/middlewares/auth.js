@@ -1,23 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ensureAuthenticated = ensureAuthenticated;
+exports.authMiddleware = authMiddleware;
 const jsonwebtoken_1 = require("jsonwebtoken");
-function ensureAuthenticated(request, response, next) {
+const prisma_1 = require("../lib/prisma");
+const auth_1 = require("../config/auth");
+async function authMiddleware(request, response, next) {
     const authHeader = request.headers.authorization;
     if (!authHeader) {
-        response.status(401).json({ error: 'Token não fornecido' });
-        return;
+        throw new Error('JWT token is missing');
     }
     const [, token] = authHeader.split(' ');
     try {
-        const decoded = (0, jsonwebtoken_1.verify)(token, process.env.JWT_SECRET || 'default_secret');
+        const decoded = (0, jsonwebtoken_1.verify)(token, auth_1.auth.jwt.secret);
+        const { sub, role } = decoded;
+        const user = await prisma_1.prisma.user.findUnique({
+            where: { id: sub },
+        });
+        if (!user) {
+            throw new Error('User not found');
+        }
         request.user = {
-            id: decoded.sub,
-            role: decoded.role
+            id: sub,
+            role,
         };
-        next();
+        return next();
     }
     catch (_a) {
-        response.status(401).json({ error: 'Token inválido' });
+        throw new Error('Invalid JWT token');
     }
 }

@@ -1,8 +1,13 @@
 import { Request, Response } from 'express'
 import { prisma } from '../lib/prisma'
-import jwt from 'jsonwebtoken'
+import jwt, { Secret } from 'jsonwebtoken'
+import { auth } from '../config/auth'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+interface JwtPayload {
+  id: string
+  role: 'ADMIN' | 'EMPLOYEE'
+  projectId?: string
+}
 
 export class AuthController {
   async login(request: Request, response: Response) {
@@ -19,18 +24,18 @@ export class AuthController {
 
       const adminUser = {
         id: 'd504a949-b481-40be-a675-1528388986aa2',
-        role: 'ADMIN',
+        role: 'ADMIN' as const,
         name: 'Administrador'
       }
-
+      // @ts-ignore
       const token = jwt.sign(
         { 
           id: adminUser.id,
           role: adminUser.role
-        },
-        JWT_SECRET,
+        } satisfies JwtPayload,
+        auth.jwt.secret as Secret,
         { 
-          expiresIn: '1d'
+          expiresIn: auth.jwt.expiresIn
         }
       )
 
@@ -45,11 +50,11 @@ export class AuthController {
   }
 
   async loginEmployee(request: Request, response: Response) {
-    const { cpf: rawCpf, projectId, companyId } = request.body
+    const { cpf: rawCpf, projectId } = request.body
     // Normalizar CPF removendo pontos e traços
     const cpf = rawCpf.replace(/\D/g, '')
     
-    console.log('Tentativa de login:', { cpf, projectId, companyId })
+    console.log('Tentativa de login:', { cpf, projectId })
 
     if (!cpf) {
       return response.status(400).json({ error: 'CPF é obrigatório' })
@@ -59,35 +64,31 @@ export class AuthController {
       return response.status(400).json({ error: 'Projeto é obrigatório' })
     }
 
-    if (!companyId) {
-      return response.status(400).json({ error: 'Empresa é obrigatória' })
-    }
-
     try {
-      // Buscar funcionário pelo CPF
-      const employee = await prisma.employee.findUnique({
+      // Buscar usuário pelo CPF
+      const user = await prisma.user.findUnique({
         where: { cpf },
         select: {
           id: true,
           name: true,
           cpf: true,
+          role: true,
           active: true
         }
       })
 
-      if (!employee) {
-        return response.status(401).json({ error: 'Funcionário não encontrado' })
+      if (!user) {
+        return response.status(401).json({ error: 'Usuário não encontrado' })
       }
 
-      if (!employee.active) {
-        return response.status(401).json({ error: 'Funcionário inativo' })
+      if (!user.active) {
+        return response.status(401).json({ error: 'Usuário inativo' })
       }
 
       // Buscar projeto
       const project = await prisma.project.findUnique({
         where: { 
-          id: projectId,
-          active: true
+          id: projectId
         },
         select: {
           id: true,
@@ -96,54 +97,48 @@ export class AuthController {
       })
 
       if (!project) {
-        return response.status(401).json({ error: 'Projeto não encontrado ou inativo' })
+        return response.status(401).json({ error: 'Projeto não encontrado' })
       }
 
-      // Buscar empresa
-      const company = await prisma.company.findUnique({
-        where: { 
-          id: companyId,
-          active: true
-        },
-        select: {
-          id: true,
-          name: true
+      // Verificar se o usuário está associado ao projeto
+      const userProject = await prisma.userProject.findUnique({
+        where: {
+          userId_projectId: {
+            userId: user.id,
+            projectId: project.id
+          }
         }
       })
 
-      if (!company) {
-        return response.status(401).json({ error: 'Empresa não encontrada ou inativa' })
+      if (!userProject) {
+        return response.status(401).json({ error: 'Usuário não está associado a este projeto' })
       }
 
       // Gerar token
+      // @ts-ignore
       const token = jwt.sign(
         { 
-          id: employee.id,
-          role: 'EMPLOYEE',
-          projectId: project.id,
-          companyId: company.id
-        },
-        JWT_SECRET,
+          id: user.id,
+          role: user.role,
+          projectId: project.id
+        } satisfies JwtPayload,
+        auth.jwt.secret as Secret,
         { 
-          expiresIn: '1d'
+          expiresIn: auth.jwt.expiresIn
         }
       )
 
       return response.json({
         token,
         user: {
-          id: employee.id,
-          name: employee.name,
-          cpf: employee.cpf,
-          role: 'EMPLOYEE'
+          id: user.id,
+          name: user.name,
+          cpf: user.cpf,
+          role: user.role
         },
         project: {
           id: project.id,
           name: project.name
-        },
-        company: {
-          id: company.id,
-          name: company.name
         }
       })
     } catch (error) {

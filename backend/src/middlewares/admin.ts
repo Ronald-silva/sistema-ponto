@@ -1,18 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../lib/prisma';
 
 export function adminMiddleware(
   request: Request,
   response: Response,
   next: NextFunction
-) {
-  const { user } = request;
+): void {
+  const { role } = request.user;
 
-  if (!user) {
-    return response.status(401).json({ error: 'Usuário não autenticado' });
-  }
-
-  if (user.role !== 'ADMIN') {
-    return response.status(403).json({ error: 'Acesso negado' });
+  if (role !== 'ADMIN') {
+    throw new Error('Acesso não autorizado');
   }
 
   return next();

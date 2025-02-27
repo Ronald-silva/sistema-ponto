@@ -3,11 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimeRecordController = void 0;
 const prisma_1 = require("../lib/prisma");
 const OvertimeCalculator_1 = require("../services/OvertimeCalculator");
-const FaceRecognitionService_1 = require("../services/FaceRecognitionService");
 class TimeRecordController {
-    constructor() {
-        this.faceRecognitionService = new FaceRecognitionService_1.FaceRecognitionService();
-    }
     async index(request, response) {
         const { userId, projectId, startDate, endDate } = request.query;
         const whereClause = {};
@@ -65,18 +61,14 @@ class TimeRecordController {
         return response.json(timeRecord);
     }
     async create(request, response) {
-        var _a, _b;
+        var _a;
         const { projectId, timestamp, type } = request.body;
-        const imageBuffer = (_a = request.file) === null || _a === void 0 ? void 0 : _a.buffer;
-        const userId = (_b = request.user) === null || _b === void 0 ? void 0 : _b.id;
+        const userId = (_a = request.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             return response.status(401).json({ error: 'Usuário não autenticado' });
         }
-        if (!imageBuffer) {
-            return response.status(400).json({ error: 'Imagem não fornecida' });
-        }
         try {
-            const userProject = await prisma_1.prisma.usersOnProjects.findUnique({
+            const userProject = await prisma_1.prisma.userProject.findUnique({
                 where: {
                     userId_projectId: {
                         userId,
@@ -128,7 +120,7 @@ class TimeRecordController {
     }
     async update(request, response) {
         const { id } = request.params;
-        const { timestamp, type, validated } = request.body;
+        const { timestamp, type } = request.body;
         const timeRecord = await prisma_1.prisma.timeRecord.findUnique({
             where: { id },
         });
@@ -140,7 +132,6 @@ class TimeRecordController {
             data: {
                 timestamp: timestamp ? new Date(timestamp) : undefined,
                 type,
-                validated,
             },
             include: {
                 user: {
@@ -214,19 +205,13 @@ class TimeRecordController {
                 timestamp: {
                     gte: new Date(startDate),
                     lte: new Date(endDate),
-                },
-                validated: true,
+                }
             },
             orderBy: {
                 timestamp: 'asc',
             },
             include: {
-                project: {
-                    include: {
-                        overtimeRules: true,
-                        holidays: true,
-                    },
-                },
+                project: true
             },
         });
         const overtimeCalculation = OvertimeCalculator_1.OvertimeCalculator.calculate(timeRecords, baseHourlyRate);
@@ -295,68 +280,6 @@ class TimeRecordController {
             type: record.type,
             timestamp: record.timestamp
         })));
-    }
-    async list(req, res) {
-        try {
-            const timeRecords = await prisma_1.prisma.timeRecord.findMany({
-                include: {
-                    user: true,
-                    project: true
-                },
-                orderBy: {
-                    timestamp: 'desc'
-                }
-            });
-            return res.json(timeRecords);
-        }
-        catch (error) {
-            console.error('Erro ao listar registros de ponto:', error);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-    }
-    async listByUser(req, res) {
-        try {
-            const { userId } = req.params;
-            const timeRecords = await prisma_1.prisma.timeRecord.findMany({
-                where: {
-                    userId
-                },
-                include: {
-                    user: true,
-                    project: true
-                },
-                orderBy: {
-                    timestamp: 'desc'
-                }
-            });
-            return res.json(timeRecords);
-        }
-        catch (error) {
-            console.error('Erro ao listar registros de ponto do usuário:', error);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-    }
-    async listByProject(req, res) {
-        try {
-            const { projectId } = req.params;
-            const timeRecords = await prisma_1.prisma.timeRecord.findMany({
-                where: {
-                    projectId
-                },
-                include: {
-                    user: true,
-                    project: true
-                },
-                orderBy: {
-                    timestamp: 'desc'
-                }
-            });
-            return res.json(timeRecords);
-        }
-        catch (error) {
-            console.error('Erro ao listar registros de ponto do projeto:', error);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
     }
 }
 exports.TimeRecordController = TimeRecordController;

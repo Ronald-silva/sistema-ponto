@@ -4,150 +4,81 @@ exports.HolidayController = void 0;
 const prisma_1 = require("../lib/prisma");
 class HolidayController {
     async index(request, response) {
-        const { projectId, year } = request.query;
-        const whereClause = {};
-        if (projectId) {
-            whereClause.projectId = String(projectId);
+        try {
+            const holidays = await prisma_1.prisma.holiday.findMany({
+                orderBy: {
+                    date: 'asc'
+                }
+            });
+            return response.json(holidays);
         }
-        if (year) {
-            const startDate = new Date(Number(year), 0, 1);
-            const endDate = new Date(Number(year), 11, 31);
-            whereClause.date = {
-                gte: startDate,
-                lte: endDate,
-            };
+        catch (error) {
+            console.error('Erro ao listar feriados:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
         }
-        const holidays = await prisma_1.prisma.holiday.findMany({
-            where: whereClause,
-            include: {
-                project: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-            orderBy: {
-                date: 'asc',
-            },
-        });
-        return response.json(holidays);
     }
     async show(request, response) {
         const { id } = request.params;
-        const holiday = await prisma_1.prisma.holiday.findUnique({
-            where: { id },
-            include: {
-                project: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-        if (!holiday) {
-            return response.status(404).json({ error: 'Feriado não encontrado' });
+        try {
+            const holiday = await prisma_1.prisma.holiday.findUnique({
+                where: { id }
+            });
+            if (!holiday) {
+                return response.status(404).json({ error: 'Feriado não encontrado' });
+            }
+            return response.json(holiday);
         }
-        return response.json(holiday);
+        catch (error) {
+            console.error('Erro ao buscar feriado:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
+        }
     }
     async create(request, response) {
-        const { date, description, type, projectId } = request.body;
-        if (type === 'PROJECT_SPECIFIC' && projectId) {
-            const project = await prisma_1.prisma.project.findUnique({
-                where: { id: projectId },
+        const { name, date } = request.body;
+        try {
+            const holiday = await prisma_1.prisma.holiday.create({
+                data: {
+                    name,
+                    date: new Date(date)
+                }
             });
-            if (!project) {
-                return response.status(404).json({ error: 'Projeto não encontrado' });
-            }
+            return response.status(201).json(holiday);
         }
-        const existingHoliday = await prisma_1.prisma.holiday.findFirst({
-            where: {
-                date: new Date(date),
-                projectId: projectId || null,
-            },
-        });
-        if (existingHoliday) {
-            return response.status(400).json({ error: 'Já existe um feriado nesta data para este projeto' });
+        catch (error) {
+            console.error('Erro ao criar feriado:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
         }
-        const holiday = await prisma_1.prisma.holiday.create({
-            data: {
-                date: new Date(date),
-                description,
-                type,
-                projectId: type === 'PROJECT_SPECIFIC' ? projectId : null,
-            },
-            include: {
-                project: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-        return response.status(201).json(holiday);
     }
     async update(request, response) {
         const { id } = request.params;
-        const { date, description, type, projectId } = request.body;
-        const holiday = await prisma_1.prisma.holiday.findUnique({
-            where: { id },
-        });
-        if (!holiday) {
-            return response.status(404).json({ error: 'Feriado não encontrado' });
-        }
-        if (type === 'PROJECT_SPECIFIC' && projectId) {
-            const project = await prisma_1.prisma.project.findUnique({
-                where: { id: projectId },
+        const { name, date } = request.body;
+        try {
+            const holiday = await prisma_1.prisma.holiday.update({
+                where: { id },
+                data: {
+                    name,
+                    date: new Date(date)
+                }
             });
-            if (!project) {
-                return response.status(404).json({ error: 'Projeto não encontrado' });
-            }
+            return response.json(holiday);
         }
-        const existingHoliday = await prisma_1.prisma.holiday.findFirst({
-            where: {
-                date: new Date(date),
-                projectId: projectId || null,
-                NOT: {
-                    id,
-                },
-            },
-        });
-        if (existingHoliday) {
-            return response.status(400).json({ error: 'Já existe um feriado nesta data para este projeto' });
+        catch (error) {
+            console.error('Erro ao atualizar feriado:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
         }
-        const updatedHoliday = await prisma_1.prisma.holiday.update({
-            where: { id },
-            data: {
-                date: date ? new Date(date) : undefined,
-                description,
-                type,
-                projectId: type === 'PROJECT_SPECIFIC' ? projectId : null,
-            },
-            include: {
-                project: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-        return response.json(updatedHoliday);
     }
     async delete(request, response) {
         const { id } = request.params;
-        const holiday = await prisma_1.prisma.holiday.findUnique({
-            where: { id },
-        });
-        if (!holiday) {
-            return response.status(404).json({ error: 'Feriado não encontrado' });
+        try {
+            await prisma_1.prisma.holiday.delete({
+                where: { id }
+            });
+            return response.status(204).send();
         }
-        await prisma_1.prisma.holiday.delete({
-            where: { id },
-        });
-        return response.status(204).send();
+        catch (error) {
+            console.error('Erro ao excluir feriado:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
+        }
     }
 }
 exports.HolidayController = HolidayController;

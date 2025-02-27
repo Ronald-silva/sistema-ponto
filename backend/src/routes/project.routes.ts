@@ -1,25 +1,80 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { ProjectController } from '../controllers/ProjectController';
-import { ensureAuthenticated } from '../middlewares/ensureAuthenticated';
-import { ensureAdmin } from '../middlewares/ensureAdmin';
+import { authMiddleware } from '../middlewares/auth';
+import { adminMiddleware } from '../middlewares/admin';
 
 const projectRoutes = Router();
 const projectController = new ProjectController();
 
-// Rota pública para listar projetos ativos
-projectRoutes.get('/active', projectController.active);
+projectRoutes.use(authMiddleware);
 
-// Rotas protegidas
-projectRoutes.use(ensureAuthenticated);
-projectRoutes.get('/', projectController.index);
-projectRoutes.get('/:id', projectController.show);
+// Rotas públicas (apenas autenticação necessária)
+const indexHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.index(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
 
-// Rotas de admin
-projectRoutes.use(ensureAdmin);
-projectRoutes.post('/', projectController.create);
-projectRoutes.put('/:id', projectController.update);
-projectRoutes.delete('/:id', projectController.delete);
-projectRoutes.post('/:id/users/:userId', projectController.addUser);
-projectRoutes.delete('/:id/users/:userId', projectController.removeUser);
+const showHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.show(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+projectRoutes.get('/', indexHandler);
+projectRoutes.get('/:id', showHandler);
+
+// Rotas administrativas
+projectRoutes.use(adminMiddleware);
+
+const createHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.create(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.update(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.delete(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const addUserHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.addUser(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeUserHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await projectController.removeUser(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+projectRoutes.post('/', createHandler);
+projectRoutes.put('/:id', updateHandler);
+projectRoutes.delete('/:id', deleteHandler);
+projectRoutes.post('/:id/users', addUserHandler);
+projectRoutes.delete('/:id/users/:userId', removeUserHandler);
 
 export { projectRoutes };

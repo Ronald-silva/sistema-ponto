@@ -7,7 +7,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export const projectsRoutes = Router()
-
+// @ts-ignore
 projectsRoutes.get('/active', async (req, res) => {
   try {
     const { data, error } = await supabase

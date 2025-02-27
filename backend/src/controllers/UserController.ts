@@ -11,7 +11,7 @@ export class UserController {
         email: true,
         role: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
         createdAt: true,
       },
@@ -31,7 +31,7 @@ export class UserController {
         email: true,
         role: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
         createdAt: true,
       },
@@ -45,7 +45,11 @@ export class UserController {
   }
 
   async create(request: Request, response: Response) {
-    const { name, email, password, role, salary, birth_year } = request.body;
+    const { name, email, password, role, salary, birth_date, cpf } = request.body;
+
+    if (!cpf) {
+      return response.status(400).json({ error: 'CPF é obrigatório' });
+    }
 
     const userExists = await prisma.user.findUnique({
       where: { email },
@@ -63,16 +67,19 @@ export class UserController {
         email,
         password: hashedPassword,
         role,
-        salary,
-        birth_year,
+        cpf,
+        salary: salary ? Number(salary) : undefined,
+        birth_date: birth_date ? new Date(birth_date) : undefined,
+        admission_date: new Date(),
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        cpf: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
       },
     });
@@ -82,7 +89,7 @@ export class UserController {
 
   async update(request: Request, response: Response) {
     const { id } = request.params;
-    const { name, email, password, role, salary, active, birth_year } = request.body;
+    const { name, email, password, role, salary, active, birth_date } = request.body;
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -96,9 +103,9 @@ export class UserController {
       name,
       email,
       role,
-      salary,
+      salary: salary ? Number(salary) : undefined,
       active,
-      birth_year,
+      birth_date: birth_date ? new Date(birth_date) : undefined,
     };
 
     if (password) {
@@ -114,7 +121,7 @@ export class UserController {
         email: true,
         role: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
       },
     });
@@ -151,7 +158,7 @@ export class UserController {
         email: true,
         role: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
         createdAt: true,
       },
@@ -214,7 +221,7 @@ export class UserController {
         email: true,
         role: true,
         salary: true,
-        birth_year: true,
+        birth_date: true,
         active: true,
         createdAt: true,
       },

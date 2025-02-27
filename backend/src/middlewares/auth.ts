@@ -1,45 +1,47 @@
 import { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+import { verify } from 'jsonwebtoken'
+import { prisma } from '../lib/prisma'
+import { auth } from '../config/auth'
 
 interface TokenPayload {
-  id: string
+  iat: number
+  exp: number
+  sub: string
   role: 'ADMIN' | 'EMPLOYEE'
-  cpf?: string
-  projectId?: string
-  companyId?: string
 }
 
 export async function authMiddleware(
   request: Request,
   response: Response,
   next: NextFunction
-) {
-  const { authorization } = request.headers
+): Promise<void> {
+  const authHeader = request.headers.authorization
 
-  if (!authorization) {
-    return response.status(401).json({ error: 'Token não fornecido' })
+  if (!authHeader) {
+    throw new Error('JWT token is missing')
   }
 
-  const [, token] = authorization.split(' ')
+  const [, token] = authHeader.split(' ')
 
   try {
-    // Verificar token JWT
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload
+    const decoded = verify(token, auth.jwt.secret) as TokenPayload
+    const { sub, role } = decoded
 
-    // Adicionar dados do usuário ao request
+    const user = await prisma.user.findUnique({
+      where: { id: sub },
+    })
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
     request.user = {
-      id: decoded.id,
-      role: decoded.role,
-      cpf: decoded.cpf,
-      projectId: decoded.projectId,
-      companyId: decoded.companyId
+      id: sub,
+      role,
     }
 
     return next()
-  } catch (err) {
-    console.error('Erro ao validar token:', err)
-    return response.status(401).json({ error: 'Token inválido' })
+  } catch {
+    throw new Error('Invalid JWT token')
   }
 }

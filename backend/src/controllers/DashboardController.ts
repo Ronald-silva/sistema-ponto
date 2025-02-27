@@ -2,37 +2,29 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
 export class DashboardController {
-  async getSummary(request: Request, response: Response) {
-    // Busca registros de hoje
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayRecordsCount = await prisma.timeRecord.count({
-      where: {
-        timestamp: {
-          gte: today
+  async index(request: Request, response: Response) {
+    try {
+      // Contagem de usuários ativos
+      const activeUsersCount = await prisma.user.count({
+        where: {
+          active: true
         }
-      }
-    });
+      });
 
-    // Busca funcionários ativos
-    const activeEmployeesCount = await prisma.employee.count({
-      where: {
-        active: true
-      }
-    });
+      // Contagem de projetos
+      const projectsCount = await prisma.project.count();
 
-    // Busca projetos ativos
-    const activeProjectsCount = await prisma.project.count({
-      where: {
-        active: true
-      }
-    });
+      // Contagem de registros de ponto
+      const timeRecordsCount = await prisma.timeRecord.count();
 
-    return response.json({
-      todayRecordsCount,
-      activeEmployeesCount,
-      activeProjectsCount
-    });
+      return response.json({
+        activeUsers: activeUsersCount,
+        projects: projectsCount,
+        timeRecords: timeRecordsCount
+      });
+    } catch (error) {
+      console.error('Erro ao buscar dados do dashboard:', error);
+      return response.status(500).json({ error: 'Erro interno do servidor' });
+    }
   }
 }

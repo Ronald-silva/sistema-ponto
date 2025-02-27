@@ -1,18 +1,62 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { HolidayController } from '../controllers/HolidayController';
+import { authMiddleware } from '../middlewares/auth';
 import { adminMiddleware } from '../middlewares/admin';
 
 const holidayRoutes = Router();
 const holidayController = new HolidayController();
 
-// Rotas públicas (usuários autenticados)
-holidayRoutes.get('/', holidayController.index);
-holidayRoutes.get('/:id', holidayController.show);
+holidayRoutes.use(authMiddleware);
+
+// Rotas públicas (apenas autenticação necessária)
+const indexHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await holidayController.index(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const showHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await holidayController.show(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+holidayRoutes.get('/', indexHandler);
+holidayRoutes.get('/:id', showHandler);
 
 // Rotas administrativas
 holidayRoutes.use(adminMiddleware);
-holidayRoutes.post('/', holidayController.create);
-holidayRoutes.put('/:id', holidayController.update);
-holidayRoutes.delete('/:id', holidayController.delete);
+
+const createHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await holidayController.create(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await holidayController.update(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteHandler: RequestHandler = async (req, res, next) => {
+  try {
+    await holidayController.delete(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+holidayRoutes.post('/', createHandler);
+holidayRoutes.put('/:id', updateHandler);
+holidayRoutes.delete('/:id', deleteHandler);
 
 export { holidayRoutes };
