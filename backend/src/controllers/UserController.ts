@@ -8,7 +8,7 @@ export class UserController {
       select: {
         id: true,
         name: true,
-        email: true,
+        cpf: true,
         role: true,
         salary: true,
         birth_date: true,
@@ -28,7 +28,7 @@ export class UserController {
       select: {
         id: true,
         name: true,
-        email: true,
+        cpf: true,
         role: true,
         salary: true,
         birth_date: true,
@@ -45,51 +45,65 @@ export class UserController {
   }
 
   async create(request: Request, response: Response) {
-    const { name, email, password, role, salary, birth_date, cpf } = request.body;
+    try {
+      console.log('📝 Dados recebidos:', request.body);
+      const { name, cpf, role, salary, birth_date, admission_date } = request.body;
 
-    if (!cpf) {
-      return response.status(400).json({ error: 'CPF é obrigatório' });
+      // Validações básicas
+      if (!name || !cpf || !role || !salary || !birth_date || !admission_date) {
+        console.log('❌ Dados incompletos:', { name, cpf, role, salary, birth_date, admission_date });
+        return response.status(400).json({ 
+          error: 'Todos os campos são obrigatórios',
+          details: 'Nome, CPF, Cargo, Salário, Data de Nascimento e Data de Admissão são obrigatórios'
+        });
+      }
+
+      console.log('🔍 Criando novo usuário...');
+      const user = await prisma.user.create({
+        data: {
+          name,
+          cpf,
+          role,
+          salary: Number(salary),
+          birth_date: new Date(birth_date),
+          admission_date: new Date(admission_date),
+          active: true,
+          password: '123456' // Senha padrão sem hash
+        },
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          role: true,
+          salary: true,
+          birth_date: true,
+          admission_date: true,
+          active: true,
+        },
+      });
+
+      console.log('✅ Usuário criado com sucesso:', user);
+      return response.status(201).json(user);
+    } catch (error: any) {
+      console.error('❌ Erro ao criar usuário:', error);
+      
+      if (error.code === 'P2002') {
+        return response.status(400).json({ 
+          error: 'CPF já cadastrado',
+          details: 'Já existe um funcionário cadastrado com este CPF'
+        });
+      }
+
+      return response.status(500).json({ 
+        error: 'Erro ao criar usuário',
+        details: error.message
+      });
     }
-
-    const userExists = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (userExists) {
-      return response.status(400).json({ error: 'Usuário já existe' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        cpf,
-        salary: salary ? Number(salary) : undefined,
-        birth_date: birth_date ? new Date(birth_date) : undefined,
-        admission_date: new Date(),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        cpf: true,
-        salary: true,
-        birth_date: true,
-        active: true,
-      },
-    });
-
-    return response.status(201).json(user);
   }
 
   async update(request: Request, response: Response) {
     const { id } = request.params;
-    const { name, email, password, role, salary, active, birth_date } = request.body;
+    const { name, role, salary, active, birth_date, admission_date } = request.body;
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -101,16 +115,12 @@ export class UserController {
 
     const data: any = {
       name,
-      email,
       role,
       salary: salary ? Number(salary) : undefined,
       active,
       birth_date: birth_date ? new Date(birth_date) : undefined,
+      admission_date: admission_date ? new Date(admission_date) : undefined
     };
-
-    if (password) {
-      data.password = await bcrypt.hash(password, 10);
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -118,10 +128,11 @@ export class UserController {
       select: {
         id: true,
         name: true,
-        email: true,
+        cpf: true,
         role: true,
         salary: true,
         birth_date: true,
+        admission_date: true,
         active: true,
       },
     });
@@ -130,21 +141,34 @@ export class UserController {
   }
 
   async delete(request: Request, response: Response) {
-    const { id } = request.params;
+    try {
+      console.log('🔍 Iniciando exclusão de usuário...');
+      const { id } = request.params;
+      console.log('📝 ID recebido:', id);
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+      const user = await prisma.user.findUnique({
+        where: { id },
+      });
 
-    if (!user) {
-      return response.status(404).json({ error: 'Usuário não encontrado' });
+      if (!user) {
+        console.log('❌ Usuário não encontrado');
+        return response.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      console.log('✅ Usuário encontrado, procedendo com a exclusão');
+      await prisma.user.delete({
+        where: { id },
+      });
+
+      console.log('✅ Usuário excluído com sucesso');
+      return response.status(204).send();
+    } catch (error) {
+      console.error('❌ Erro ao excluir usuário:', error);
+      return response.status(500).json({ 
+        error: 'Erro ao excluir usuário',
+        details: error.message
+      });
     }
-
-    await prisma.user.delete({
-      where: { id },
-    });
-
-    return response.status(204).send();
   }
 
   async profile(request: Request, response: Response) {
@@ -155,7 +179,7 @@ export class UserController {
       select: {
         id: true,
         name: true,
-        email: true,
+        cpf: true,
         role: true,
         salary: true,
         birth_date: true,

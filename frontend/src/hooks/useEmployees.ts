@@ -1,28 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
+import { api } from '../lib/api'
 
-export type Role = 
-  | 'PEDREIRO'
-  | 'SERVENTE'
-  | 'MESTRE_DE_OBRAS'
-  | 'CARPINTEIRO'
-  | 'ARMADOR'
-  | 'ELETRICISTA'
-  | 'ENCANADOR'
-  | 'PINTOR'
-  | 'AZULEJISTA'
-  | 'ENGENHEIRO'
-  | 'ARQUITETO'
-  | 'ALMOXARIFE'
-  | 'ADMINISTRATIVO'
-  | 'ADMIN'
+export type Role = string
 
 interface Employee {
   id: string
   name: string
   cpf: string
-  role: Role
+  role: string
   active: boolean
   salary?: number
   birth_date?: string
@@ -32,14 +18,12 @@ interface Employee {
 interface CreateEmployeeData {
   name: string
   cpf: string
-  role: Role
+  role: string
   salary?: number
   birth_date?: string
   admission_date?: string
   active?: boolean
 }
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export function useEmployees() {
   const queryClient = useQueryClient()
@@ -47,116 +31,69 @@ export function useEmployees() {
   const { data: employees, isLoading } = useQuery<Employee[]>({
     queryKey: ['employees'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('active', true)
-        .order('id', { ascending: false })
-
-      if (error) {
-        console.error('Erro ao carregar funcionários:', error)
-        throw new Error(`Erro ao carregar funcionários: ${error.message}`)
-      }
-
-      return data
+      const response = await api.get('/users')
+      return response.data
     }
   })
 
   const createEmployee = useMutation({
     mutationFn: async (data: CreateEmployeeData) => {
-      // Primeiro verifica se já existe um usuário com este CPF
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('cpf', data.cpf)
-        .single()
-
-      if (existingUser) {
-        throw new Error('Já existe um funcionário cadastrado com este CPF')
+      const formattedData = {
+        ...data,
+        cpf: data.cpf.replace(/\D/g, ''),
+        salary: typeof data.salary === 'string' 
+          ? Number(data.salary.replace(/[^\d.,]/g, '').replace(',', '.'))
+          : data.salary,
+        active: data.active ?? true
       }
 
-      // Cria o registro na tabela users
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert([
-          {
-            name: data.name,
-            cpf: data.cpf,
-            role: data.role,
-            active: data.active ?? true,
-            salary: data.salary,
-            birth_date: data.birth_date,
-            admission_date: data.admission_date
-          }
-        ])
-        .select()
-        .single()
-
-      if (userError) {
-        console.error('Erro ao criar funcionário:', userError)
-        throw new Error(`Erro ao criar funcionário: ${userError.message}`)
-      }
-
-      return userData
+      const response = await api.post('/users', formattedData)
+      return response.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       toast.success('Funcionário cadastrado com sucesso!')
     },
-    onError: (error: Error) => {
-      toast.error(error.message)
+    onError: (error: any) => {
+      console.error('Erro ao criar funcionário:', error)
+      toast.error(error.response?.data?.message || 'Erro ao criar funcionário')
     }
   })
 
   const updateEmployee = useMutation({
-    mutationFn: async (data: Employee) => {
-      const { data: updatedUser, error } = await supabase
-        .from('users')
-        .update({
-          name: data.name,
-          role: data.role,
-          salary: data.salary,
-          birth_date: data.birth_date,
-          admission_date: data.admission_date
-        })
-        .eq('id', data.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Erro ao atualizar funcionário:', error)
-        throw new Error(`Erro ao atualizar funcionário: ${error.message}`)
+    mutationFn: async ({ id, ...data }: Employee) => {
+      const formattedData = {
+        ...data,
+        salary: typeof data.salary === 'string' 
+          ? Number(data.salary.replace(/[^\d.,]/g, '').replace(',', '.'))
+          : data.salary
       }
 
-      return updatedUser
+      const response = await api.put(`/users/${id}`, formattedData)
+      return response.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       toast.success('Funcionário atualizado com sucesso!')
     },
-    onError: (error: Error) => {
-      toast.error(error.message)
+    onError: (error: any) => {
+      console.error('Erro ao atualizar funcionário:', error)
+      toast.error(error.response?.data?.message || 'Erro ao atualizar funcionário')
     }
   })
 
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('users')
-        .update({ active: false })
-        .eq('id', id)
-
-      if (error) {
-        console.error('Erro ao excluir funcionário:', error)
-        throw new Error(`Erro ao excluir funcionário: ${error.message}`)
-      }
+      const response = await api.delete(`/users/${id}`)
+      return response.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       toast.success('Funcionário excluído com sucesso!')
     },
-    onError: (error: Error) => {
-      toast.error(error.message)
+    onError: (error: any) => {
+      console.error('Erro ao excluir funcionário:', error)
+      toast.error(error.response?.data?.message || 'Erro ao excluir funcionário')
     }
   })
 

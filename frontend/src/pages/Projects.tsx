@@ -58,7 +58,7 @@ const companyOptions = [
 ]
 
 export function Projects() {
-  const { projects, isLoading, createProject, updateProject } = useProjects()
+  const { projects, isLoading, createProject, updateProject, deleteProject } = useProjects()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<EditingProject | null>(null)
@@ -175,11 +175,9 @@ export function Projects() {
   async function handleDelete(id: string) {
     if (confirm('Tem certeza que deseja excluir esta obra?')) {
       try {
-        await updateProject.mutateAsync({
-          id,
-          active: false
-        } as any)
-        toast.success('Obra excluída com sucesso')
+        console.log('Tentando excluir projeto:', id)
+        await deleteProject.mutateAsync(id)
+        console.log('Projeto excluído com sucesso')
       } catch (error) {
         console.error('Erro ao excluir obra:', error)
         toast.error('Erro ao excluir obra')

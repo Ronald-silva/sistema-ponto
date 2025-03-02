@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Project" ADD COLUMN     "category" TEXT NOT NULL DEFAULT 'CONSTRUCTION',
+ADD COLUMN     "estimated_end_date" TIMESTAMP(3),
+ADD COLUMN     "location" TEXT,
+ADD COLUMN     "start_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

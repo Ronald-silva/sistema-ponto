@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../services/api'
 
 interface User {
   id: string
@@ -47,16 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error('Senha é obrigatória')
         }
 
-        if (password !== 'admin123') {
-          throw new Error('Senha incorreta')
-        }
+        // Fazer a requisição de login para o backend
+        const response = await api.post('/auth/login', {
+          password
+        })
 
-        const adminUser = {
-          id: 'admin-id',
-          role: 'ADMIN' as const,
-          name: 'Administrador'
-        }
-
+        const { token, user: adminUser } = response.data
+        
+        localStorage.setItem('@sistema-ponto:token', token)
+        localStorage.setItem('@sistema-ponto:user', JSON.stringify(adminUser))
+        
         setUser(adminUser)
         navigate('/dashboard')
 
@@ -75,16 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Selecione uma empresa')
       }
 
-      const employeeUser = {
-        id: 'employee-id',
-        role: 'EMPLOYEE' as const,
-        name: 'João da Silva',
+      // Fazer a requisição de login para o backend
+      const response = await api.post('/auth/employee', {
         cpf,
         projectId,
-        projectName: 'Obra 1',
-        companyId,
-        companyName: 'CDG Engenharia'
-      }
+        companyId
+      })
+
+      const { user: employeeUser, token } = response.data
+
+      localStorage.setItem('@sistema-ponto:token', token)
+      localStorage.setItem('@sistema-ponto:user', JSON.stringify(employeeUser))
 
       setUser(employeeUser)
       navigate('/time-entry')
@@ -97,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    localStorage.removeItem('@sistema-ponto:token')
+    localStorage.removeItem('@sistema-ponto:user')
     setUser(null)
     navigate('/sign-in')
   }

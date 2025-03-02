@@ -9,59 +9,59 @@ import { formatCurrency } from '../utils/formatCurrency'
 import { useEffect } from 'react'
 
 const roleOptions = {
-  'ALMOXARIFE A': 'Almoxarife A',
-  'ANALISTA ADMINISTRATIVO II': 'Analista Administrativo II',
-  'Analista Ambiental Junior': 'Analista Ambiental Junior',
-  'Analista de Compras Junior A': 'Analista de Compras Junior A',
-  'Analista de Controladoria Junior A': 'Analista de Controladoria Junior A',
-  'Analista de Orçamento Junior A': 'Analista de Orçamento Junior A',
-  'Analista de Planejamento Junior A': 'Analista de Planejamento Junior A',
-  'ASSISTENTE ADM V': 'Assistente Adm V',
-  'Assistente de Compras': 'Assistente de Compras',
-  'Assistente de Controladoria C': 'Assistente de Controladoria C',
-  'Assistente de Departamento Pessoal C': 'Assistente de Departamento Pessoal C',
-  'Assistente de Obra A': 'Assistente de Obra A',
-  'Assistente de TI A': 'Assistente de TI A',
-  'Assistente Financeiro': 'Assistente Financeiro',
-  'ASSISTENTE TECNICO III': 'Assistente Técnico III',
-  'AUX ADMINISTRATIVO I': 'Aux Administrativo I',
-  'AUX DE BOMBEIRO HIDRAULICO': 'Aux de Bombeiro Hidráulico',
-  'Auxiliar Administrativo B': 'Auxiliar Administrativo B',
-  'Auxiliar de Almoxarifado': 'Auxiliar de Almoxarifado',
-  'AUXILIAR DE BOMBEIRO': 'Auxiliar de Bombeiro',
-  'AUXILIAR DE MUNK': 'Auxiliar de Munk',
-  'Auxiliar de Obra A': 'Auxiliar de Obra A',
-  'BOMBEIRO HIDRAULICO': 'Bombeiro Hidráulico',
-  'Coordenador Administrativo-Financeiro': 'Coordenador Administrativo-Financeiro',
-  'ENCARREGADO DE OBRAS': 'Encarregado de Obras',
-  'ENCARREGADO DE OBRAS I': 'Encarregado de Obras I',
-  'ENGENHEIRO CIVIL': 'Engenheiro Civil',
-  'ESTAGIARIO': 'Estagiário',
-  'ESTAGIARIO DE ENDOMARKETING': 'Estagiário de Endomarketing',
-  'ESTAGIARIO DE PROCESSOS': 'Estagiário de Processos',
-  'GERENTE DE OBRAS': 'Gerente de Obras',
-  'JOVEM APRENDIZ': 'Jovem Aprendiz',
-  'LIDER DE EQUIPE': 'Líder de Equipe',
-  'MESTRE DE OBRAS': 'Mestre de Obras',
-  'MOTORISTA': 'Motorista',
-  'MOTORISTA I': 'Motorista I',
-  'MOTORISTA OPERACIONAL DE GUINCHO': 'Motorista Operacional de Guincho',
-  'Operador de Máquina de Terraplanagem': 'Operador de Máquina de Terraplanagem',
-  'PEDREIRO': 'Pedreiro',
-  'RECEPCIONISTA': 'Recepcionista',
-  'SERVENTE': 'Servente',
-  'SERVICOS GERAIS I': 'Serviços Gerais I',
-  'SERVICOS GERAIS II': 'Serviços Gerais II',
-  'SUPERVISOR ADM II': 'Supervisor Adm II',
-  'Supervisor de Compras': 'Supervisor de Compras',
-  'Supervisor de Departamento Pessoal A': 'Supervisor de Departamento Pessoal A',
-  'Supervisor de Desenvolvimento Humano': 'Supervisor de Desenvolvimento Humano',
-  'Supervisor de Obra': 'Supervisor de Obra',
-  'SUPERVISOR DE SEGURANCA DO TRABALHO': 'Supervisor de Segurança do Trabalho',
-  'Supervisor Financeiro': 'Supervisor Financeiro',
-  'TECNICO DE SEGURANCA DO TRABALHO II': 'Técnico de Segurança do Trabalho II',
-  'TOPOGRAFO': 'Topógrafo',
-  'VIGIA': 'Vigia'
+  'ALMOXARIFE_A': 'ALMOXARIFE A',
+  'ANALISTA_ADMINISTRATIVO_II': 'ANALISTA ADMINISTRATIVO II',
+  'ANALISTA_AMBIENTAL_JUNIOR': 'Analista Ambiental Junior',
+  'ANALISTA_COMPRAS_JUNIOR_A': 'Analista de Compras Junior A',
+  'ANALISTA_CONTROLADORIA_JUNIOR_A': 'Analista de Controladoria Junior A',
+  'ANALISTA_ORCAMENTO_JUNIOR_A': 'Analista de Orçamento Junior A',
+  'ANALISTA_PLANEJAMENTO_JUNIOR_A': 'Analista de Planejamento Junior A',
+  'ASSISTENTE_ADM_V': 'ASSISTENTE ADM V',
+  'ASSISTENTE_COMPRAS': 'Assistente de Compras',
+  'ASSISTENTE_CONTROLADORIA_C': 'Assistente de Controladoria C',
+  'ASSISTENTE_DP_C': 'Assistente de Departamento Pessoal C',
+  'ASSISTENTE_OBRA_A': 'Assistente de Obra A',
+  'ASSISTENTE_TI_A': 'Assistente de TI A',
+  'ASSISTENTE_FINANCEIRO': 'Assistente Financeiro',
+  'ASSISTENTE_TECNICO_III': 'ASSISTENTE TECNICO III',
+  'AUX_ADMINISTRATIVO_I': 'AUX ADMINISTRATIVO I',
+  'AUX_BOMBEIRO_HIDRAULICO': 'AUX DE BOMBEIRO HIDRAULICO',
+  'AUXILIAR_ADMINISTRATIVO_B': 'Auxiliar Administrativo B',
+  'AUXILIAR_ALMOXARIFADO': 'Auxiliar de Almoxarifado',
+  'AUXILIAR_BOMBEIRO': 'AUXILIAR DE BOMBEIRO',
+  'AUXILIAR_MUNK': 'AUXILIAR DE MUNK',
+  'AUXILIAR_OBRA_A': 'Auxiliar de Obra A',
+  'BOMBEIRO_HIDRAULICO': 'BOMBEIRO HIDRAULICO',
+  'COORDENADOR_ADM_FINANCEIRO': 'Coordenador Administrativo-Financeiro',
+  'ENCARREGADO_OBRAS': 'ENCARREGADO DE OBRAS',
+  'ENCARREGADO_OBRAS_I': 'ENCARREGADO DE OBRAS I',
+  'ENGENHEIRO_CIVIL': 'ENGENHEIRO CIVIL',
+  'ESTAGIARIO': 'ESTAGIARIO',
+  'ESTAGIARIO_ENDOMARKETING': 'ESTAGIARIO DE ENDOMARKETING',
+  'ESTAGIARIO_PROCESSOS': 'ESTAGIARIO DE PROCESSOS',
+  'GERENTE_OBRAS': 'GERENTE DE OBRAS',
+  'JOVEM_APRENDIZ': 'JOVEM APRENDIZ',
+  'LIDER_EQUIPE': 'LIDER DE EQUIPE',
+  'MESTRE_OBRAS': 'MESTRE DE OBRAS',
+  'MOTORISTA': 'MOTORISTA',
+  'MOTORISTA_I': 'MOTORISTA I',
+  'MOTORISTA_GUINCHO': 'MOTORISTA OPERACIONAL DE GUINCHO',
+  'OPERADOR_MAQUINA_TERRAPLANAGEM': 'Operador de Máquina de Terraplanagem',
+  'PEDREIRO': 'PEDREIRO',
+  'RECEPCIONISTA': 'RECEPCIONISTA',
+  'SERVENTE': 'SERVENTE',
+  'SERVICOS_GERAIS_I': 'SERVICOS GERAIS I',
+  'SERVICOS_GERAIS_II': 'SERVICOS GERAIS II',
+  'SUPERVISOR_ADM_II': 'SUPERVISOR ADM II',
+  'SUPERVISOR_COMPRAS': 'Supervisor de Compras',
+  'SUPERVISOR_DP_A': 'Supervisor de Departamento Pessoal A',
+  'SUPERVISOR_DH': 'Supervisor de Desenvolvimento Humano',
+  'SUPERVISOR_OBRA': 'Supervisor de Obra',
+  'SUPERVISOR_SEGURANCA_TRABALHO': 'SUPERVISOR DE SEGURANCA DO TRABALHO',
+  'SUPERVISOR_FINANCEIRO': 'Supervisor Financeiro',
+  'TECNICO_SEGURANCA_TRABALHO_II': 'TECNICO DE SEGURANCA DO TRABALHO II',
+  'TOPOGRAFO': 'TOPOGRAFO',
+  'VIGIA': 'VIGIA'
 }
 
 const employeeFormSchema = z.object({
@@ -72,11 +72,7 @@ const employeeFormSchema = z.object({
     .transform(val => val.replace(/\D/g, ''))
     .refine(val => val.length === 11, 'CPF deve ter 11 dígitos'),
   role: z.string()
-    .min(1, 'O cargo é obrigatório')
-    .refine(
-      (value) => Object.keys(roleOptions).includes(value),
-      'Cargo inválido'
-    ),
+    .min(1, 'O cargo é obrigatório'),
   salary: z.string()
     .min(1, 'O salário é obrigatório')
     .transform(val => val.replace(/\D/g, '')),
@@ -117,9 +113,9 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     resolver: zodResolver(employeeFormSchema),
     defaultValues: defaultValues ? {
       ...defaultValues,
-      birth_date: defaultValues.birth_date.split('T')[0],
-      admission_date: defaultValues.admission_date.split('T')[0],
-      salary: formatCurrency(Number(defaultValues.salary))
+      birth_date: defaultValues.birth_date ? defaultValues.birth_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      admission_date: defaultValues.admission_date ? defaultValues.admission_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      salary: defaultValues.salary ? formatCurrency(Number(defaultValues.salary)) : 'R$ 0,00'
     } : {
       name: '',
       cpf: '',
@@ -136,9 +132,9 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     if (defaultValues) {
       reset({
         ...defaultValues,
-        birth_date: defaultValues.birth_date.split('T')[0],
-        admission_date: defaultValues.admission_date.split('T')[0],
-        salary: formatCurrency(Number(defaultValues.salary))
+        birth_date: defaultValues.birth_date ? defaultValues.birth_date.split('T')[0] : new Date().toISOString().split('T')[0],
+        admission_date: defaultValues.admission_date ? defaultValues.admission_date.split('T')[0] : new Date().toISOString().split('T')[0],
+        salary: defaultValues.salary ? formatCurrency(Number(defaultValues.salary)) : 'R$ 0,00'
       })
     } else {
       reset({
@@ -174,7 +170,7 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
       const formattedData = {
         ...data,
         cpf: data.cpf.replace(/\D/g, ''), // Remove caracteres não numéricos do CPF
-        salary: Number(data.salary.replace(/\D/g, '')) / 100, // Converte salário para número
+        salary: Number(data.salary.replace(/[^\d,]/g, '').replace(',', '.')), // Converte salário para número
         birth_date: new Date(data.birth_date).toISOString().split('T')[0], // Formata data de nascimento
         admission_date: new Date(data.admission_date).toISOString().split('T')[0], // Formata data de admissão
         active: data.active ?? true // Garante que active tenha um valor padrão
@@ -346,3 +342,4 @@ export function EmployeeForm({ isOpen, onClose, defaultValues }: EmployeeFormPro
     </Modal>
   )
 }
+
