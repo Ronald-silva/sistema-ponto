@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { api } from '../lib/axios'
+import { api } from '../lib/api'
 import { toast } from 'sonner'
 import { useDateTime } from '../hooks/useDateTime'
 import { useNavigate } from 'react-router-dom'
