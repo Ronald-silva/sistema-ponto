@@ -7,114 +7,150 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  ALMOXARIFE_A
+  ALMOXARIFE_B
+  ANALISTA_ADMINISTRATIVO_II
+  ANALISTA_COMPRAS_JUNIOR_A
+  ANALISTA_COMPRAS_JUNIOR_B
+  ANALISTA_COMPRAS_PLENO
+  ANALISTA_COMPRAS_SENIOR
+  ANALISTA_CONTABIL_JUNIOR
+  ANALISTA_CONTABIL_PLENO
+  ANALISTA_CONTABIL_SENIOR
+  ANALISTA_CONTROLADORIA_JUNIOR
+  ANALISTA_CONTROLADORIA_PLENO
+  ANALISTA_CONTROLADORIA_SENIOR
+  ANALISTA_FINANCEIRO_JUNIOR
+  ANALISTA_FINANCEIRO_PLENO
+  ANALISTA_FINANCEIRO_SENIOR
+  ANALISTA_FISCAL_JUNIOR
+  ANALISTA_FISCAL_PLENO
+  ANALISTA_FISCAL_SENIOR
+  ANALISTA_RH_JUNIOR
+  ANALISTA_RH_PLENO
+  ANALISTA_RH_SENIOR
+  ASSISTENTE_ADMINISTRATIVO_I
+  ASSISTENTE_ADMINISTRATIVO_II
+  ASSISTENTE_COMPRAS_I
+  ASSISTENTE_COMPRAS_II
+  ASSISTENTE_CONTABIL_I
+  ASSISTENTE_CONTABIL_II
+  ASSISTENTE_CONTROLADORIA_I
+  ASSISTENTE_CONTROLADORIA_II
+  ASSISTENTE_FINANCEIRO_I
+  ASSISTENTE_FINANCEIRO_II
+  ASSISTENTE_FISCAL_I
+  ASSISTENTE_FISCAL_II
+  ASSISTENTE_RH_I
+  ASSISTENTE_RH_II
+  AUXILIAR_ADMINISTRATIVO_I
+  AUXILIAR_ADMINISTRATIVO_II
+  AUXILIAR_COMPRAS_I
+  AUXILIAR_COMPRAS_II
+  AUXILIAR_CONTABIL_I
+  AUXILIAR_CONTABIL_II
+  AUXILIAR_CONTROLADORIA_I
+  AUXILIAR_CONTROLADORIA_II
+  AUXILIAR_FINANCEIRO_I
+  AUXILIAR_FINANCEIRO_II
+  AUXILIAR_FISCAL_I
+  AUXILIAR_FISCAL_II
+  AUXILIAR_RH_I
+  AUXILIAR_RH_II
+  COORDENADOR_ADMINISTRATIVO
+  COORDENADOR_COMPRAS
+  COORDENADOR_CONTABIL
+  COORDENADOR_CONTROLADORIA
+  COORDENADOR_FINANCEIRO
+  COORDENADOR_FISCAL
+  COORDENADOR_RH
+  DIRETOR_ADMINISTRATIVO
+  DIRETOR_COMPRAS
+  DIRETOR_CONTABIL
+  DIRETOR_CONTROLADORIA
+  DIRETOR_FINANCEIRO
+  DIRETOR_FISCAL
+  DIRETOR_RH
+  ENGENHEIRO_CIVIL
+  ESTAGIARIO_ADMINISTRATIVO
+  ESTAGIARIO_COMPRAS
+  ESTAGIARIO_CONTABIL
+  ESTAGIARIO_CONTROLADORIA
+  ESTAGIARIO_FINANCEIRO
+  ESTAGIARIO_FISCAL
+  ESTAGIARIO_RH
+  GERENTE_ADMINISTRATIVO
+  GERENTE_COMPRAS
+  GERENTE_CONTABIL
+  GERENTE_CONTROLADORIA
+  GERENTE_FINANCEIRO
+  GERENTE_FISCAL
+  GERENTE_RH
+  SUPERVISOR_ADMINISTRATIVO
+  SUPERVISOR_COMPRAS
+  SUPERVISOR_CONTABIL
+  SUPERVISOR_CONTROLADORIA
+  SUPERVISOR_FINANCEIRO
+  SUPERVISOR_FISCAL
+  SUPERVISOR_RH
+  TECNICO_ADMINISTRATIVO_I
+  TECNICO_ADMINISTRATIVO_II
+  TECNICO_COMPRAS_I
+  TECNICO_COMPRAS_II
+  TECNICO_CONTABIL_I
+  TECNICO_CONTABIL_II
+  TECNICO_CONTROLADORIA_I
+  TECNICO_CONTROLADORIA_II
+  TECNICO_FINANCEIRO_I
+  TECNICO_FINANCEIRO_II
+  TECNICO_FISCAL_I
+  TECNICO_FISCAL_II
+  TECNICO_RH_I
+  TECNICO_RH_II
+}
+
 model User {
-  id             String        @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
+  cpf            String       @unique
   password       String
-  cpf            String        @unique
   role           UserRole
   salary         Float
   birth_date     DateTime
   admission_date DateTime
-  active         Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  timeRecords    TimeRecord[]
-  userProjects   UserProject[]
-}
-
-model Project {
-  id                String        @id @default(uuid())
-  name              String
-  description       String?
-  companyId         String
-  category          String        @default("CONSTRUCTION")
-  location          String?
-  start_date        DateTime      @default(now())
-  estimated_end_date DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  active            Boolean       @default(true)
-  status            String        @default("Em Andamento")
-  timeRecords       TimeRecord[]
-  users             UserProject[]
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  TimeRecord     TimeRecord[]
+  faceDescriptor Float[]
 }
 
 model TimeRecord {
   id        String   @id @default(uuid())
   userId    String
-  projectId String
-  timestamp DateTime
   type      String
+  timestamp DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 }
 
-model UserProject {
-  userId     String
-  projectId  String
-  assignedAt DateTime @default(now())
-  project    Project  @relation(fields: [projectId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-
-  @@id([userId, projectId])
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-enum UserRole {
-  ADMIN
-  ALMOXARIFE_A
-  ANALISTA_ADMINISTRATIVO_II
-  ANALISTA_AMBIENTAL_JUNIOR
-  ANALISTA_COMPRAS_JUNIOR_A
-  ANALISTA_CONTROLADORIA_JUNIOR_A
-  ANALISTA_ORCAMENTO_JUNIOR_A
-  ANALISTA_PLANEJAMENTO_JUNIOR_A
-  ASSISTENTE_ADM_V
-  ASSISTENTE_COMPRAS
-  ASSISTENTE_CONTROLADORIA_C
-  ASSISTENTE_DP_C
-  ASSISTENTE_OBRA_A
-  ASSISTENTE_TI_A
-  ASSISTENTE_FINANCEIRO
-  ASSISTENTE_TECNICO_III
-  AUX_ADMINISTRATIVO_I
-  AUX_BOMBEIRO_HIDRAULICO
-  AUXILIAR_ADMINISTRATIVO_B
-  AUXILIAR_ALMOXARIFADO
-  AUXILIAR_BOMBEIRO
-  AUXILIAR_MUNK
-  AUXILIAR_OBRA_A
-  BOMBEIRO_HIDRAULICO
-  COORDENADOR_ADM_FINANCEIRO
-  ENCARREGADO_OBRAS
-  ENCARREGADO_OBRAS_I
-  ENGENHEIRO_CIVIL
-  ESTAGIARIO
-  ESTAGIARIO_ENDOMARKETING
-  ESTAGIARIO_PROCESSOS
-  GERENTE_OBRAS
-  JOVEM_APRENDIZ
-  LIDER_EQUIPE
-  MESTRE_OBRAS
-  MOTORISTA
-  MOTORISTA_I
-  MOTORISTA_GUINCHO
-  OPERADOR_MAQUINA_TERRAPLANAGEM
-  PEDREIRO
-  RECEPCIONISTA
-  SERVENTE
-  SERVICOS_GERAIS_I
-  SERVICOS_GERAIS_II
-  SUPERVISOR_ADM_II
-  SUPERVISOR_COMPRAS
-  SUPERVISOR_DP_A
-  SUPERVISOR_DH
-  SUPERVISOR_OBRA
-  SUPERVISOR_SEGURANCA_TRABALHO
-  SUPERVISOR_FINANCEIRO
-  TECNICO_SEGURANCA_TRABALHO_II
-  TOPOGRAFO
-  VIGIA
+model Holiday {
+  id          String   @id @default(uuid())
+  name        String
+  date        DateTime
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
